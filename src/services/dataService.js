@@ -32,7 +32,7 @@ const ownerSeeds = [
   ['owner-freja-nystrom', 'Freja Nyström', 'Oak Court 27, Gothenburg', '+46 72 889 1144', 'freja.nystrom@example.com', 'Lars Nyström · +46 72 221 4400', 'Autopay registered · Ref FN-27'],
   ['owner-mikael-berg', 'Mikael Berg', 'Harbour View 5, Malmö', '+46 76 220 1188', 'mikael.berg@example.com', 'Sofia Berg · +46 76 220 1177', 'Invoice by post · customer 1045'],
   ['owner-lina-karlsson', 'Lina Karlsson', 'Pine Terrace 2, Lund', '+46 79 501 6633', 'lina.karlsson@example.com', 'Nils Karlsson · +46 79 444 2233', 'Bank transfer · Ref LK-005'],
-].map(([id, name, address, phone, email, emergencyContact, billingInfo]) => ({ id, name, address, phone, email, emergencyContact, billingInfo }))
+].map(([id, name, address, phone, email, emergencyContact, paymentMethod]) => ({ id, name, address, phone, email, emergencyContact, paymentMethod }))
 
 const horseSeeds = [
   ['horse-bella', 'Bella', 'Swedish Warmblood', 9, 'Mare', 'Bay', 'SE-SWB-10294', '752098100112233', 'Agria Premium', 'Up to date', 'Sensitive to spring pollen; monitor coughing after trail rides.', 'Spring pollen', 'Low starch diet with soaked beet pulp.', 'owner-anna-lindberg', 'stall-1', addMonths(-14, 12), '2017-04-18', 'active', 'Prefers quiet turnout companions and evening grooming.'],
