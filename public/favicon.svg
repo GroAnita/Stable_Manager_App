@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Stable Manager icon">
+  <rect width="64" height="64" rx="12" fill="#1f3a2d" />
+  <path d="M16 42 L24 22 L32 42 L40 22 L48 42" fill="none" stroke="#f3d38a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

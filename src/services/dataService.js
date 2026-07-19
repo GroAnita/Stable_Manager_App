@@ -148,11 +148,11 @@ const medicalRecords = horseSeeds.flatMap((horse, index) => ([
 ]))
 
 const settingsSeed = {
-  stableName: 'North Meadow Stable',
-  managerName: 'Sofia Andersson',
-  phone: '+46 70 555 1212',
-  email: 'hello@northmeadowstable.se',
-  address: 'North Meadow Lane 3, 754 53 Uppsala',
+  stableName: 'Nestun Stable',
+  managerName: 'Gro Anita Bråthen',
+  phone: '984 83 540',
+  email: 'gro.anita.brathen@gmail.com',
+  address: 'Vålaugsvegen 57, 2032 Maura, Norway',
   currency: 'EUR',
   compactMode: false,
   defaultCalendarView: 'month',
