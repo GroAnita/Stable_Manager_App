@@ -2,14 +2,22 @@ import { generateId } from '../utils/helpers.js'
 
 const parse = (value) => {
   if (value === null || value === undefined) return null
-  try { return JSON.parse(value) } catch { return value }
+  try {
+    return JSON.parse(value)
+  } catch {
+    return value
+  }
 }
 
 export const storage = {
-  get(key) { return parse(window.localStorage.getItem(key)) },
+  get(key) {
+    return parse(window.localStorage.getItem(key))
+  },
   set(key, value) {
     const next = Array.isArray(value)
-      ? value.map((item) => (item && typeof item === 'object' && !item.id ? { ...item, id: generateId() } : item))
+      ? value.map((item) =>
+          item && typeof item === 'object' && !item.id ? { ...item, id: generateId() } : item,
+        )
       : value
     window.localStorage.setItem(key, JSON.stringify(next))
     return next

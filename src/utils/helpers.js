@@ -1,3 +1,22 @@
+const HTML_ESCAPE_MAP = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+}
+
+/**
+ * Escapes a value for safe interpolation into HTML markup, preventing
+ * stored/DOM-based XSS when rendering user-supplied text via `innerHTML`.
+ *
+ * @param {unknown} value - Value to escape. Non-string values are stringified.
+ * @returns {string} HTML-escaped string.
+ */
+export function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char])
+}
+
 export function generateId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
   return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`
@@ -10,10 +29,16 @@ export function formatDate(dateStr, options = { day: 'numeric', month: 'short', 
   return new Intl.DateTimeFormat('en-GB', options).format(date)
 }
 
+let currentCurrency = 'EUR'
+
+export function setCurrency(code) {
+  if (code) currentCurrency = code
+}
+
 export function formatCurrency(amount) {
   return new Intl.NumberFormat('en-IE', {
     style: 'currency',
-    currency: 'EUR',
+    currency: currentCurrency,
     maximumFractionDigits: 0,
   }).format(Number(amount) || 0)
 }
@@ -46,18 +71,38 @@ export function formatRelativeTime(dateStr) {
   if (!dateStr) return '—'
   const seconds = Math.round((new Date(dateStr) - new Date()) / 1000)
   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-  const ranges = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]]
+  const ranges = [
+    ['year', 31536000],
+    ['month', 2592000],
+    ['week', 604800],
+    ['day', 86400],
+    ['hour', 3600],
+    ['minute', 60],
+  ]
   for (const [unit, value] of ranges) {
-    if (Math.abs(seconds) >= value || unit === 'minute') return rtf.format(Math.round(seconds / value), unit)
+    if (Math.abs(seconds) >= value || unit === 'minute')
+      return rtf.format(Math.round(seconds / value), unit)
   }
   return 'just now'
 }
 
 export function getStatusColor(status = '') {
   const normalized = String(status).toLowerCase()
-  if (['paid', 'active', 'available', 'completed', 'healthy', 'confirmed', 'up to date'].includes(normalized)) return 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-  if (['due', 'reserved', 'medium', 'pending', 'warning', 'partially paid', 'due soon'].includes(normalized)) return 'bg-amber-100 text-amber-800 border border-amber-200'
-  if (['overdue', 'maintenance', 'expired', 'cancelled', 'high', 'unpaid'].includes(normalized)) return 'bg-red-100 text-red-800 border border-red-200'
-  if (['occupied', 'scheduled', 'info', 'low', 'farrier', 'vet', 'training'].includes(normalized)) return 'bg-sky-100 text-sky-800 border border-sky-200'
+  if (
+    ['paid', 'active', 'available', 'completed', 'healthy', 'confirmed', 'up to date'].includes(
+      normalized,
+    )
+  )
+    return 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+  if (
+    ['due', 'reserved', 'medium', 'pending', 'warning', 'partially paid', 'due soon'].includes(
+      normalized,
+    )
+  )
+    return 'bg-amber-100 text-amber-800 border border-amber-200'
+  if (['overdue', 'maintenance', 'expired', 'cancelled', 'high', 'unpaid'].includes(normalized))
+    return 'bg-red-100 text-red-800 border border-red-200'
+  if (['occupied', 'scheduled', 'info', 'low', 'farrier', 'vet', 'training'].includes(normalized))
+    return 'bg-sky-100 text-sky-800 border border-sky-200'
   return 'bg-slate-100 text-slate-700 border border-slate-200'
 }

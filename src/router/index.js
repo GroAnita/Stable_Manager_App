@@ -46,9 +46,19 @@ const parseLocation = () => {
 function matchRoute(pathname) {
   for (const route of routes) {
     const keys = []
-    const pattern = route.path.replace(/:([^/]+)/g, (_, key) => { keys.push(key); return '([^/]+)' })
+    const pattern = route.path.replace(/:([^/]+)/g, (_, key) => {
+      keys.push(key)
+      return '([^/]+)'
+    })
     const match = pathname.match(new RegExp(`^${pattern}$`))
-    if (match) return { route, params: keys.reduce((acc, key, index) => ({ ...acc, [key]: decodeURIComponent(match[index + 1]) }), {}) }
+    if (match)
+      return {
+        route,
+        params: keys.reduce(
+          (acc, key, index) => ({ ...acc, [key]: decodeURIComponent(match[index + 1]) }),
+          {},
+        ),
+      }
   }
   return null
 }
@@ -58,7 +68,11 @@ function renderRoute() {
   const location = parseLocation()
   const matched = matchRoute(location.path)
   const view = matched?.route.view || NotFound
-  view.render(rootContainer, { ...(matched?.params || {}), query: location.query, path: location.path })
+  view.render(rootContainer, {
+    ...(matched?.params || {}),
+    query: location.query,
+    path: location.path,
+  })
   window.dispatchEvent(new CustomEvent('app:route-change', { detail: { path: location.path } }))
 }
 
@@ -68,5 +82,12 @@ export function navigate(path) {
   window.location.hash = target
 }
 
-export function getCurrentRoute() { return parseLocation().path }
-export function initRouter(container) { rootContainer = container; window.addEventListener('hashchange', renderRoute); if (!window.location.hash) navigate('/dashboard'); else renderRoute() }
+export function getCurrentRoute() {
+  return parseLocation().path
+}
+export function initRouter(container) {
+  rootContainer = container
+  window.addEventListener('hashchange', renderRoute)
+  if (!window.location.hash) navigate('/dashboard')
+  else renderRoute()
+}

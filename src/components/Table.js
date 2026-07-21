@@ -1,5 +1,17 @@
-export function createTable({ id = 'table', columns = [], data = [], sortBy = '', sortDirection = 'asc', emptyMessage = 'No rows found.' }) {
-  const rows = data.map((row) => `<tr>${columns.map((column) => `<td>${column.render ? column.render(row) : row[column.key] ?? '—'}</td>`).join('')}</tr>`).join('')
+export function createTable({
+  id = 'table',
+  columns = [],
+  data = [],
+  sortBy = '',
+  sortDirection = 'asc',
+  emptyMessage = 'No rows found.',
+}) {
+  const rows = data
+    .map(
+      (row) =>
+        `<tr>${columns.map((column) => `<td>${column.render ? column.render(row) : (row[column.key] ?? '—')}</td>`).join('')}</tr>`,
+    )
+    .join('')
   return `
     <div class="table-wrap">
       <table id="${id}" class="data-table">

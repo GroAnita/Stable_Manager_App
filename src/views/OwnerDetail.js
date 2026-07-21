@@ -3,16 +3,54 @@ import { EmptyState } from '../components/EmptyState.js'
 import { confirmDialog } from '../components/ConfirmDialog.js'
 import { notify } from '../components/Notification.js'
 import { deleteOwnerCascade, getOwnerBundle, getRecord } from '../services/dataService.js'
-import { formatCurrency, formatDate } from '../utils/helpers.js'
+import { escapeHtml, formatCurrency, formatDate } from '../utils/helpers.js'
 import { icon } from '../utils/icons.js'
 import { navigate } from '../router/index.js'
 
 export function render(container, params) {
   const bundle = getOwnerBundle(params.id)
-  if (!bundle.owner) return void (container.innerHTML = '<div class="panel p-8 text-center text-slate-500">Owner not found.</div>')
+  if (!bundle.owner)
+    return void (container.innerHTML =
+      '<div class="panel p-8 text-center text-slate-500">Owner not found.</div>')
   const outstanding = bundle.payments.filter((payment) => payment.status !== 'paid')
-  container.innerHTML = `<div class="page-shell"><div class="page-header"><div><p class="text-sm uppercase tracking-[0.25em] text-slate-400">Owner profile</p><h1 class="mt-2 text-3xl font-semibold text-slate-900">${bundle.owner.name}</h1><p class="mt-2 text-sm text-slate-500">${bundle.owner.address}</p></div><div class="flex gap-3"><button class="btn-ghost" data-edit>${icon('edit', 'h-4 w-4')}Edit</button><button class="btn-secondary" data-delete>${icon('trash', 'h-4 w-4')}Delete</button></div></div><div class="grid gap-6 xl:grid-cols-[1.1fr,1.4fr]"><div class="space-y-6"><div class="panel p-5"><h2 class="section-title">Contact info</h2><div class="mt-4 space-y-3 text-sm text-slate-600"><p><span class="font-medium text-slate-800">Phone:</span> ${bundle.owner.phone}</p><p><span class="font-medium text-slate-800">Email:</span> ${bundle.owner.email}</p><p><span class="font-medium text-slate-800">Emergency:</span> ${bundle.owner.emergencyContact}</p><p><span class="font-medium text-slate-800">Billing:</span> ${bundle.owner.paymentMethod}</p></div></div><div class="panel p-5"><div class="mb-4 flex items-center justify-between"><h2 class="section-title">Outstanding invoices</h2><span class="text-sm text-slate-400">${outstanding.length} open</span></div>${outstanding.length ? `<div class="space-y-3">${outstanding.slice(0, 5).map((payment) => `<div class="rounded-2xl bg-slate-50 px-4 py-3"><div class="flex items-center justify-between gap-3"><p class="font-medium text-slate-900">${getRecord('horses', payment.horseId)?.name || 'Horse'}</p>${Badge(payment.status)}</div><p class="mt-2 text-sm text-slate-500">${payment.invoiceNumber} · ${formatCurrency(payment.amount)} · Due ${formatDate(payment.dueDate)}</p></div>`).join('')}</div>` : '<p class="text-sm text-slate-500">No outstanding invoices.</p>'}</div></div><div class="space-y-6"><div class="panel p-5"><div class="mb-4 flex items-center justify-between"><h2 class="section-title">Horses owned</h2><span class="text-sm text-slate-400">${bundle.horses.length} horses</span></div>${bundle.horses.length ? `<div class="grid gap-3 md:grid-cols-2">${bundle.horses.map((horse) => `<button class="rounded-2xl border border-slate-100 p-4 text-left hover:bg-slate-50" data-horse-open="${horse.id}"><p class="font-medium text-slate-900">${horse.name}</p><p class="mt-1 text-sm text-slate-500">${horse.breed} · Stall ${getRecord('stalls', horse.stallId)?.number || '—'}</p></button>`).join('')}</div>` : EmptyState({ icon: '🐴', title: 'No horses linked', message: 'Assign a horse to this owner to see it here.' })}</div><div class="panel p-5"><h2 class="section-title">Current contracts</h2><div class="mt-4 space-y-3">${bundle.contracts.length ? bundle.contracts.map((contract) => `<div class="rounded-2xl bg-slate-50 px-4 py-3"><div class="flex items-center justify-between gap-3"><p class="font-medium text-slate-900">${getRecord('horses', contract.horseId)?.name || 'Horse'} · Stall ${getRecord('stalls', contract.stallId)?.number || '—'}</p>${Badge(contract.status)}</div><p class="mt-2 text-sm text-slate-500">${formatCurrency(contract.monthlyRent)} / month · ${formatDate(contract.startDate)} – ${formatDate(contract.endDate)}</p></div>`).join('') : '<p class="text-sm text-slate-500">No contracts saved.</p>'}</div></div><div class="panel p-5"><h2 class="section-title">Payment history</h2><div class="mt-4 space-y-3">${bundle.payments.slice(0, 8).map((payment) => `<div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 px-4 py-3"><div><p class="font-medium text-slate-900">${payment.invoiceNumber}</p><p class="text-sm text-slate-500">${getRecord('horses', payment.horseId)?.name || 'Horse'} · Due ${formatDate(payment.dueDate)}</p></div><div class="text-right"><p class="font-medium text-slate-900">${formatCurrency(payment.amount)}</p><div class="mt-1">${Badge(payment.status)}</div></div></div>`).join('')}</div></div></div></div></div>`
-  container.querySelector('[data-edit]').addEventListener('click', () => navigate(`/owners/${bundle.owner.id}/edit`))
-  container.querySelector('[data-delete]').addEventListener('click', async () => { if (!(await confirmDialog({ title: 'Delete owner', message: `Delete ${bundle.owner.name} and all linked records?`, confirmText: 'Delete' }))) return; deleteOwnerCascade(bundle.owner.id); notify(`${bundle.owner.name} was deleted.`, 'success'); navigate('/owners') })
-  container.querySelectorAll('[data-horse-open]').forEach((button) => button.addEventListener('click', () => navigate(`/horses/${button.getAttribute('data-horse-open')}`)))
+  container.innerHTML = `<div class="page-shell"><div class="page-header"><div><p class="text-sm uppercase tracking-[0.25em] text-slate-400">Owner profile</p><h1 class="mt-2 text-3xl font-semibold text-slate-900">${escapeHtml(bundle.owner.name)}</h1><p class="mt-2 text-sm text-slate-500">${escapeHtml(bundle.owner.address)}</p></div><div class="flex gap-3"><button class="btn-ghost" data-edit>${icon('edit', 'h-4 w-4')}Edit</button><button class="btn-secondary" data-delete>${icon('trash', 'h-4 w-4')}Delete</button></div></div><div class="grid gap-6 xl:grid-cols-[1.1fr,1.4fr]"><div class="space-y-6"><div class="panel p-5"><h2 class="section-title">Contact info</h2><div class="mt-4 space-y-3 text-sm text-slate-600"><p><span class="font-medium text-slate-800">Phone:</span> ${escapeHtml(bundle.owner.phone)}</p><p><span class="font-medium text-slate-800">Email:</span> ${escapeHtml(bundle.owner.email)}</p><p><span class="font-medium text-slate-800">Emergency:</span> ${escapeHtml(bundle.owner.emergencyContact)}</p><p><span class="font-medium text-slate-800">Billing:</span> ${escapeHtml(bundle.owner.paymentMethod)}</p></div></div><div class="panel p-5"><div class="mb-4 flex items-center justify-between"><h2 class="section-title">Outstanding invoices</h2><span class="text-sm text-slate-400">${outstanding.length} open</span></div>${
+    outstanding.length
+      ? `<div class="space-y-3">${outstanding
+          .slice(0, 5)
+          .map(
+            (payment) =>
+              `<div class="rounded-2xl bg-slate-50 px-4 py-3"><div class="flex items-center justify-between gap-3"><p class="font-medium text-slate-900">${getRecord('horses', payment.horseId)?.name || 'Horse'}</p>${Badge(payment.status)}</div><p class="mt-2 text-sm text-slate-500">${payment.invoiceNumber} · ${formatCurrency(payment.amount)} · Due ${formatDate(payment.dueDate)}</p></div>`,
+          )
+          .join('')}</div>`
+      : '<p class="text-sm text-slate-500">No outstanding invoices.</p>'
+  }</div></div><div class="space-y-6"><div class="panel p-5"><div class="mb-4 flex items-center justify-between"><h2 class="section-title">Horses owned</h2><span class="text-sm text-slate-400">${bundle.horses.length} horses</span></div>${bundle.horses.length ? `<div class="grid gap-3 md:grid-cols-2">${bundle.horses.map((horse) => `<button class="rounded-2xl border border-slate-100 p-4 text-left hover:bg-slate-50" data-horse-open="${horse.id}"><p class="font-medium text-slate-900">${escapeHtml(horse.name)}</p><p class="mt-1 text-sm text-slate-500">${escapeHtml(horse.breed)} · Stall ${getRecord('stalls', horse.stallId)?.number || '—'}</p></button>`).join('')}</div>` : EmptyState({ icon: '🐴', title: 'No horses linked', message: 'Assign a horse to this owner to see it here.' })}</div><div class="panel p-5"><h2 class="section-title">Current contracts</h2><div class="mt-4 space-y-3">${bundle.contracts.length ? bundle.contracts.map((contract) => `<div class="rounded-2xl bg-slate-50 px-4 py-3"><div class="flex items-center justify-between gap-3"><p class="font-medium text-slate-900">${getRecord('horses', contract.horseId)?.name || 'Horse'} · Stall ${getRecord('stalls', contract.stallId)?.number || '—'}</p>${Badge(contract.status)}</div><p class="mt-2 text-sm text-slate-500">${formatCurrency(contract.monthlyRent)} / month · ${formatDate(contract.startDate)} – ${formatDate(contract.endDate)}</p></div>`).join('') : '<p class="text-sm text-slate-500">No contracts saved.</p>'}</div></div><div class="panel p-5"><h2 class="section-title">Payment history</h2><div class="mt-4 space-y-3">${bundle.payments
+    .slice(0, 8)
+    .map(
+      (payment) =>
+        `<div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 px-4 py-3"><div><p class="font-medium text-slate-900">${payment.invoiceNumber}</p><p class="text-sm text-slate-500">${getRecord('horses', payment.horseId)?.name || 'Horse'} · Due ${formatDate(payment.dueDate)}</p></div><div class="text-right"><p class="font-medium text-slate-900">${formatCurrency(payment.amount)}</p><div class="mt-1">${Badge(payment.status)}</div></div></div>`,
+    )
+    .join('')}</div></div></div></div></div>`
+  container
+    .querySelector('[data-edit]')
+    .addEventListener('click', () => navigate(`/owners/${bundle.owner.id}/edit`))
+  container.querySelector('[data-delete]').addEventListener('click', async () => {
+    if (
+      !(await confirmDialog({
+        title: 'Delete owner',
+        message: `Delete ${bundle.owner.name} and all linked records?`,
+        confirmText: 'Delete',
+      }))
+    )
+      return
+    deleteOwnerCascade(bundle.owner.id)
+    notify(`${bundle.owner.name} was deleted.`, 'success')
+    navigate('/owners')
+  })
+  container
+    .querySelectorAll('[data-horse-open]')
+    .forEach((button) =>
+      button.addEventListener('click', () =>
+        navigate(`/horses/${button.getAttribute('data-horse-open')}`),
+      ),
+    )
 }

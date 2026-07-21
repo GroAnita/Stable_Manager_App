@@ -1,6 +1,9 @@
 import { icon } from '../utils/icons.js'
 
-export function SearchBar({ id = 'global-search', placeholder = 'Search horses, owners, stalls, contracts...' } = {}) {
+export function SearchBar({
+  id = 'global-search',
+  placeholder = 'Search horses, owners, stalls, contracts...',
+} = {}) {
   return `
     <div class="relative w-full max-w-xl">
       <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">${icon('search', 'h-4 w-4')}</div>

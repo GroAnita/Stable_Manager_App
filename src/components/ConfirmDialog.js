@@ -1,6 +1,10 @@
 import { openModal } from './Modal.js'
 
-export function confirmDialog({ title = 'Confirm action', message = 'Are you sure?', confirmText = 'Confirm' } = {}) {
+export function confirmDialog({
+  title = 'Confirm action',
+  message = 'Are you sure?',
+  confirmText = 'Confirm',
+} = {}) {
   return new Promise((resolve) => {
     const modal = openModal({
       title,
@@ -8,7 +12,13 @@ export function confirmDialog({ title = 'Confirm action', message = 'Are you sur
       footer: `<button type="button" class="btn-ghost" data-action="cancel">Cancel</button><button type="button" class="btn-primary" data-action="confirm">${confirmText}</button>`,
       width: 'max-w-md',
     })
-    modal.element.querySelector('[data-action="cancel"]').addEventListener('click', () => { modal.close(); resolve(false) })
-    modal.element.querySelector('[data-action="confirm"]').addEventListener('click', () => { modal.close(); resolve(true) })
+    modal.element.querySelector('[data-action="cancel"]').addEventListener('click', () => {
+      modal.close()
+      resolve(false)
+    })
+    modal.element.querySelector('[data-action="confirm"]').addEventListener('click', () => {
+      modal.close()
+      resolve(true)
+    })
   })
 }
