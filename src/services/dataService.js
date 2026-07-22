@@ -1016,7 +1016,7 @@ function syncContract(contract) {
 }
 
 export function createRecord(entity, data) {
-  const record = { id: data.id || generateId(), ...data }
+  const record = { ...data, id: data.id || generateId() }
   saveAll(entity, [...getAll(entity), record])
   if (entity === 'horses') syncHorseStall(record)
   if (entity === 'contracts') syncContract(record)

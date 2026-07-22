@@ -276,15 +276,25 @@ export function render(container, params = {}) {
     if (existingPlan) updateRecord('feedingPlans', existingPlan.id, feedingPayload)
     else createRecord('feedingPlans', { ...feedingPayload, horseId })
 
-    getAll('medicalRecords')
-      .filter((record) => record.horseId === horseId)
-      .forEach((record) => deleteRecord('medicalRecords', record.id))
-    medicalPayload.forEach((record) => createRecord('medicalRecords', { ...record, horseId }))
-
-    getAll('calendarEvents')
-      .filter((event) => event.horseId === horseId)
-      .forEach((event) => deleteRecord('calendarEvents', event.id))
-    eventPayload.forEach((event) => createRecord('calendarEvents', { ...event, horseId }))
+    // Update rows that already existed, delete rows the user removed, and
+    // only create rows that are genuinely new. Deleting everything and
+    // recreating it (even unchanged rows) raced the fire-and-forget Supabase
+    // delete/create calls for the same id and could throw a duplicate-key
+    // error when the recreate reached the server before the delete did.
+    const syncChildRecords = (entity, payloadRows) => {
+      const existing = getAll(entity).filter((item) => item.horseId === horseId)
+      const keptIds = new Set(payloadRows.filter((row) => row.id).map((row) => row.id))
+      existing
+        .filter((item) => !keptIds.has(item.id))
+        .forEach((item) => deleteRecord(entity, item.id))
+      payloadRows.forEach((row) =>
+        row.id
+          ? updateRecord(entity, row.id, { ...row, horseId })
+          : createRecord(entity, { ...row, horseId }),
+      )
+    }
+    syncChildRecords('medicalRecords', medicalPayload)
+    syncChildRecords('calendarEvents', eventPayload)
 
     notify(
       `${payload.name} ${editing ? 'updated' : 'added to the stable'} successfully.`,

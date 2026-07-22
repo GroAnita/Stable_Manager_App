@@ -54,13 +54,28 @@ export function render(container) {
           if (!day) return '<div class="min-h-28 rounded-2xl bg-white/50"></div>'
           const iso = day.toISOString().slice(0, 10)
           const dayEvents = events.filter((event) => event.date === iso)
-          return `<div class="min-h-28 rounded-2xl border border-slate-200 bg-white p-3"><div class="flex items-center justify-between"><p class="font-medium text-slate-900">${day.getDate()}</p><span class="text-xs text-slate-400">${dayEvents.length || ''}</span></div><div class="mt-2 space-y-1">${dayEvents
+          const typeCounts = dayEvents.reduce((acc, event) => {
+            acc[event.type] = (acc[event.type] || 0) + 1
+            return acc
+          }, {})
+          return `<div class="min-h-28 rounded-2xl border border-slate-200 bg-white p-3"><div class="flex items-center justify-between"><p class="font-medium text-slate-900">${day.getDate()}</p><span class="text-xs text-slate-400">${dayEvents.length || ''}</span></div><div class="mt-2 hidden space-y-1 sm:block">${dayEvents
             .slice(0, 3)
             .map(
               (event) =>
-                `<button class="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-xs hover:bg-slate-50" data-open-event="${event.id}"><span class="h-2 w-2 rounded-full" style="background:${colors[event.type] || '#688F91'}"></span>${escapeHtml(event.title)}</button>`,
+                `<button type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-xs hover:bg-slate-50" data-open-event="${event.id}"><span class="h-2 w-2 rounded-full" style="background:${colors[event.type] || '#688F91'}"></span>${escapeHtml(event.title)}</button>`,
             )
-            .join('')}</div></div>`
+            .join('')}</div>${
+            dayEvents.length
+              ? `<button type="button" class="mt-2 flex w-full flex-wrap items-center gap-1.5 sm:hidden" data-open-day="${iso}">${Object.entries(
+                  typeCounts,
+                )
+                  .map(
+                    ([type, count]) =>
+                      `<span class="flex items-center gap-1 rounded-full bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600"><span class="h-2 w-2 rounded-full" style="background:${colors[type] || '#688F91'}"></span>${count}</span>`,
+                  )
+                  .join('')}</button>`
+              : ''
+          }</div>`
         })
         .join('')}</div>`
     }
@@ -120,6 +135,23 @@ export function render(container) {
         openModal({
           title: event.title,
           body: `<div class="space-y-3 text-sm text-slate-600"><div><span class="font-medium text-slate-800">Date:</span> ${formatDate(event.date)} at ${event.time}</div><div><span class="font-medium text-slate-800">Type:</span> ${event.type}</div><div><span class="font-medium text-slate-800">Horse:</span> ${getRecord('horses', event.horseId)?.name ? escapeHtml(getRecord('horses', event.horseId).name) : 'Stable event'}</div><div><span class="font-medium text-slate-800">Notes:</span> ${escapeHtml(event.notes)}</div></div>`,
+        })
+      }),
+    )
+    container.querySelectorAll('[data-open-day]').forEach((button) =>
+      button.addEventListener('click', () => {
+        const iso = button.getAttribute('data-open-day')
+        const dayEvents = events.filter((event) => event.date === iso)
+        openModal({
+          title: formatDate(iso),
+          body: dayEvents.length
+            ? `<div class="space-y-3">${dayEvents
+                .map(
+                  (event) =>
+                    `<div class="flex items-start gap-3 rounded-2xl border border-slate-100 p-3"><span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style="background:${colors[event.type] || '#688F91'}"></span><div><div class="flex flex-wrap items-center gap-2"><p class="font-medium text-slate-900">${escapeHtml(event.title)}</p>${Badge(event.type)}</div><p class="mt-1 text-xs text-slate-500">${event.time}${getRecord('horses', event.horseId)?.name ? ` · ${escapeHtml(getRecord('horses', event.horseId).name)}` : ''}</p>${event.notes ? `<p class="mt-1 text-xs text-slate-400">${escapeHtml(event.notes)}</p>` : ''}</div></div>`,
+                )
+                .join('')}</div>`
+            : '<p class="text-sm text-slate-500">No events this day.</p>',
         })
       }),
     )
