@@ -5,10 +5,27 @@ import { capitalize } from '../utils/helpers.js'
 import { icon } from '../utils/icons.js'
 import { navigate } from '../router/index.js'
 
-const renderCard = (horse) =>
-  `<button class="panel flex flex-col gap-4 p-5 text-left hover:-translate-y-0.5" data-horse-open="${horse.id}"><div class="flex items-start justify-between gap-4"><div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-forest/10 text-2xl font-semibold text-forest">${horse.name.charAt(0)}</div><span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">${capitalize(horse.status)}</span></div><div><h3 class="text-xl font-semibold text-slate-900">${horse.name}</h3><p class="mt-1 text-sm text-slate-500">${horse.breed} · ${horse.age} yrs · ${horse.gender}</p></div><div class="grid grid-cols-2 gap-3 text-sm text-slate-500"><div><span class="block text-xs uppercase tracking-wide text-slate-400">Stall</span>${getRecord('stalls', horse.stallId)?.number || '—'}</div><div><span class="block text-xs uppercase tracking-wide text-slate-400">Owner</span>${getRecord('owners', horse.ownerId)?.name || '—'}</div></div></button>`
-const renderRow = (horse) =>
-  `<button class="panel flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-slate-50" data-horse-open="${horse.id}"><div class="flex items-center gap-4"><div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest/10 text-lg font-semibold text-forest">${horse.name.charAt(0)}</div><div><p class="font-medium text-slate-900">${horse.name}</p><p class="text-sm text-slate-500">${horse.breed} · ${horse.color}</p></div></div><div class="hidden text-sm text-slate-500 md:block">${getRecord('owners', horse.ownerId)?.name || '—'}</div><div class="hidden text-sm text-slate-500 md:block">Stall ${getRecord('stalls', horse.stallId)?.number || '—'}</div><div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">${capitalize(horse.status)}</div></button>`
+const SERVICE_LABELS = {
+  full: 'Full service',
+  weekFull: 'Week full service',
+  normal: 'Normal service',
+}
+
+const getServiceLabel = (horse) => {
+  const contract = getAll('contracts').find(
+    (item) => item.horseId === horse.id && item.status === 'active',
+  )
+  return contract ? SERVICE_LABELS[contract.includedServices] || contract.includedServices : null
+}
+
+const renderCard = (horse) => {
+  const serviceLabel = getServiceLabel(horse)
+  return `<button class="panel flex flex-col gap-4 p-5 text-left hover:-translate-y-0.5" data-horse-open="${horse.id}"><div class="flex items-start justify-between gap-4"><div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-forest/10 text-2xl font-semibold text-forest">${horse.name.charAt(0)}</div><div class="flex flex-wrap justify-end gap-2"><span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">${capitalize(horse.status)}</span>${serviceLabel ? `<span class="rounded-full bg-forest/10 px-3 py-1 text-xs font-medium text-forest">${serviceLabel}</span>` : ''}</div></div><div><h3 class="text-xl font-semibold text-slate-900">${horse.name}</h3><p class="mt-1 text-sm text-slate-500">${horse.breed} · ${horse.age} yrs · ${horse.gender}</p></div><div class="grid grid-cols-2 gap-3 text-sm text-slate-500"><div><span class="block text-xs uppercase tracking-wide text-slate-400">Stall</span>${getRecord('stalls', horse.stallId)?.number || '—'}</div><div><span class="block text-xs uppercase tracking-wide text-slate-400">Owner</span>${getRecord('owners', horse.ownerId)?.name || '—'}</div></div></button>`
+}
+const renderRow = (horse) => {
+  const serviceLabel = getServiceLabel(horse)
+  return `<button class="panel flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-slate-50" data-horse-open="${horse.id}"><div class="flex items-center gap-4"><div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest/10 text-lg font-semibold text-forest">${horse.name.charAt(0)}</div><div><p class="font-medium text-slate-900">${horse.name}</p><p class="text-sm text-slate-500">${horse.breed} · ${horse.color}</p></div></div><div class="hidden text-sm text-slate-500 md:block">${getRecord('owners', horse.ownerId)?.name || '—'}</div><div class="hidden text-sm text-slate-500 md:block">Stall ${getRecord('stalls', horse.stallId)?.number || '—'}</div><div class="flex flex-wrap items-center gap-2"><span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">${capitalize(horse.status)}</span>${serviceLabel ? `<span class="rounded-full bg-forest/10 px-3 py-1 text-xs font-medium text-forest">${serviceLabel}</span>` : ''}</div></button>`
+}
 
 export function render(container) {
   const horses = getAll('horses')
