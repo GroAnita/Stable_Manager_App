@@ -6,14 +6,10 @@ import {
   getRecord,
   updateRecord,
 } from '../services/dataService.js'
+import { t } from '../i18n/index.js'
 import { navigate } from '../router/index.js'
 
-const TABS = [
-  ['contact', 'Contact info'],
-  ['horses', 'Horses'],
-  ['contracts', 'Contracts'],
-  ['payments', 'Payments'],
-]
+const TAB_KEYS = ['contact', 'horses', 'contracts', 'payments']
 
 export function render(container, params = {}) {
   const editing = Boolean(params.id)
@@ -28,46 +24,53 @@ export function render(container, params = {}) {
     : []
   let activeTab = 'contact'
 
+  const tabLabels = {
+    contact: t('ownerForm.tabContact'),
+    horses: t('ownerForm.tabHorses'),
+    contracts: t('ownerForm.tabContracts'),
+    payments: t('ownerForm.tabPayments'),
+  }
+
   const contractRowTemplate = (row = {}) => `
     <div class="record-row grid gap-3 rounded-2xl border border-slate-100 p-4 md:grid-cols-2 xl:grid-cols-3" data-row-id="${row.id || ''}">
-      <label><span class="field-label">Horse</span><select class="field" data-field="horseId"><option value="">Select horse</option>${allHorses.map((horse) => `<option value="${horse.id}" ${row.horseId === horse.id ? 'selected' : ''}>${horse.name}</option>`).join('')}</select></label>
-      <label><span class="field-label">Stall</span><select class="field" data-field="stallId"><option value="">Select stall</option>${allStalls.map((stall) => `<option value="${stall.id}" ${row.stallId === stall.id ? 'selected' : ''}>Stall ${stall.number}</option>`).join('')}</select></label>
-      <label><span class="field-label">Status</span><select class="field" data-field="status">${['active', 'expired', 'cancelled'].map((value) => `<option value="${value}" ${row.status === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
-      <label><span class="field-label">Monthly rent (€)</span><input class="field" type="number" data-field="monthlyRent" value="${row.monthlyRent ?? ''}" /></label>
-      <label><span class="field-label">Deposit (€)</span><input class="field" type="number" data-field="deposit" value="${row.deposit ?? ''}" /></label>
-      <label><span class="field-label">Start date</span><input class="field" type="date" data-field="startDate" value="${row.startDate || ''}" /></label>
-      <label><span class="field-label">End date</span><input class="field" type="date" data-field="endDate" value="${row.endDate || ''}" /></label>
-      <label class="md:col-span-2 xl:col-span-3"><span class="field-label">Included services</span><textarea class="field min-h-16" data-field="includedServices">${row.includedServices || ''}</textarea></label>
-      <label class="md:col-span-2 xl:col-span-3"><span class="field-label">Additional services</span><textarea class="field min-h-16" data-field="additionalServices">${row.additionalServices || ''}</textarea></label>
-      <div class="flex items-end"><button type="button" class="btn-ghost w-full" data-remove-row>Remove</button></div>
+      <label><span class="field-label">${t('contractForm.horse')}</span><select class="field" data-field="horseId"><option value="">${t('ownerForm.selectHorse')}</option>${allHorses.map((horse) => `<option value="${horse.id}" ${row.horseId === horse.id ? 'selected' : ''}>${horse.name}</option>`).join('')}</select></label>
+      <label><span class="field-label">${t('contractForm.stall')}</span><select class="field" data-field="stallId"><option value="">${t('ownerForm.selectStall')}</option>${allStalls.map((stall) => `<option value="${stall.id}" ${row.stallId === stall.id ? 'selected' : ''}>${t('ownerForm.stallOption', { number: stall.number })}</option>`).join('')}</select></label>
+      <label><span class="field-label">${t('ownerForm.contractStatus')}</span><select class="field" data-field="status">${['active', 'expired', 'cancelled'].map((value) => `<option value="${value}" ${row.status === value ? 'selected' : ''}>${t(`status.${value}`)}</option>`).join('')}</select></label>
+      <label><span class="field-label">${t('ownerForm.monthlyRent')}</span><input class="field" type="number" data-field="monthlyRent" value="${row.monthlyRent ?? ''}" /></label>
+      <label><span class="field-label">${t('ownerForm.deposit')}</span><input class="field" type="number" data-field="deposit" value="${row.deposit ?? ''}" /></label>
+      <label><span class="field-label">${t('ownerForm.startDate')}</span><input class="field" type="date" data-field="startDate" value="${row.startDate || ''}" /></label>
+      <label><span class="field-label">${t('ownerForm.endDate')}</span><input class="field" type="date" data-field="endDate" value="${row.endDate || ''}" /></label>
+      <label class="md:col-span-2 xl:col-span-3"><span class="field-label">${t('ownerForm.includedServices')}</span><textarea class="field min-h-16" data-field="includedServices">${row.includedServices || ''}</textarea></label>
+      <label class="md:col-span-2 xl:col-span-3"><span class="field-label">${t('ownerForm.additionalServices')}</span><textarea class="field min-h-16" data-field="additionalServices">${row.additionalServices || ''}</textarea></label>
+      <div class="flex items-end"><button type="button" class="btn-ghost w-full" data-remove-row>${t('ownerForm.remove')}</button></div>
     </div>`
 
   const paymentRowTemplate = (row = {}) => `
     <div class="record-row grid gap-3 rounded-2xl border border-slate-100 p-4 md:grid-cols-2 xl:grid-cols-3" data-row-id="${row.id || ''}">
-      <label class="md:col-span-2 xl:col-span-3"><span class="field-label">Contract</span><select class="field" data-field="contractId"><option value="">Select contract</option>${contracts.map((contract) => `<option value="${contract.id}" ${row.contractId === contract.id ? 'selected' : ''}>${getRecord('horses', contract.horseId)?.name || 'Horse'} · €${contract.monthlyRent}/mo</option>`).join('')}</select></label>
-      <label><span class="field-label">Amount (€)</span><input class="field" type="number" data-field="amount" value="${row.amount ?? ''}" /></label>
-      <label><span class="field-label">Due date</span><input class="field" type="date" data-field="dueDate" value="${row.dueDate || ''}" /></label>
-      <label><span class="field-label">Paid date</span><input class="field" type="date" data-field="paidDate" value="${row.paidDate || ''}" /></label>
-      <label><span class="field-label">Invoice number</span><input class="field" type="text" data-field="invoiceNumber" value="${row.invoiceNumber || ''}" /></label>
-      <label><span class="field-label">Status</span><select class="field" data-field="status">${['due', 'paid', 'overdue'].map((value) => `<option value="${value}" ${row.status === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
-      <div class="flex items-end"><button type="button" class="btn-ghost w-full" data-remove-row>Remove</button></div>
+      <label class="md:col-span-2 xl:col-span-3"><span class="field-label">${t('contractList.contractFallback')}</span><select class="field" data-field="contractId"><option value="">${t('ownerForm.selectContract')}</option>${contracts.map((contract) => `<option value="${contract.id}" ${row.contractId === contract.id ? 'selected' : ''}>${t('ownerForm.contractOption', { horse: getRecord('horses', contract.horseId)?.name || t('ownerDetail.horseFallback'), rent: contract.monthlyRent })}</option>`).join('')}</select></label>
+      <label><span class="field-label">${t('ownerForm.amount')}</span><input class="field" type="number" data-field="amount" value="${row.amount ?? ''}" /></label>
+      <label><span class="field-label">${t('ownerForm.dueDate')}</span><input class="field" type="date" data-field="dueDate" value="${row.dueDate || ''}" /></label>
+      <label><span class="field-label">${t('ownerForm.paidDate')}</span><input class="field" type="date" data-field="paidDate" value="${row.paidDate || ''}" /></label>
+      <label><span class="field-label">${t('ownerForm.invoiceNumber')}</span><input class="field" type="text" data-field="invoiceNumber" value="${row.invoiceNumber || ''}" /></label>
+      <label><span class="field-label">${t('ownerForm.paymentStatus')}</span><select class="field" data-field="status">${['due', 'paid', 'overdue'].map((value) => `<option value="${value}" ${row.status === value ? 'selected' : ''}>${t(`status.${value}`)}</option>`).join('')}</select></label>
+      <div class="flex items-end"><button type="button" class="btn-ghost w-full" data-remove-row>${t('ownerForm.remove')}</button></div>
     </div>`
 
   container.innerHTML = `
     <div class="page-shell">
-      <div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">${editing ? 'Edit owner' : 'Add owner'}</h1><p class="mt-2 text-sm text-slate-500">Store reliable contact, boarding and billing details for each boarder.</p></div></div>
-      <div class="flex flex-wrap gap-2">${TABS.map(([key, label]) => `<button type="button" class="${key === activeTab ? 'bg-forest text-white' : 'bg-white text-slate-600'} rounded-xl px-4 py-2 text-sm font-medium" data-tab="${key}">${label}</button>`).join('')}</div>
+      <div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">${editing ? t('ownerForm.editTitle') : t('ownerForm.addTitle')}</h1><p class="mt-2 text-sm text-slate-500">${t('ownerForm.subtitle')}</p></div></div>
+      <div class="flex flex-wrap gap-2">${TAB_KEYS.map((key) => `<button type="button" class="${key === activeTab ? 'bg-forest text-white' : 'bg-white text-slate-600'} rounded-xl px-4 py-2 text-sm font-medium" data-tab="${key}">${tabLabels[key]}</button>`).join('')}</div>
       <form id="owner-form" class="panel p-6">
 
         <div class="tab-panel" data-panel="contact">
           <div class="grid gap-5 md:grid-cols-2">
             ${[
-              ['name', 'Name', 'text', true],
-              ['phone', 'Phone', 'tel', true],
-              ['email', 'Email', 'email', true],
-              ['address', 'Address', 'text', true],
-              ['emergencyContact', 'Emergency contact', 'text', true],
-              ['paymentMethod', 'Billing info', 'text', true],
+              ['name', t('ownerForm.name'), 'text', true],
+              ['phone', t('ownerForm.phone'), 'tel', true],
+              ['email', t('ownerForm.email'), 'email', true],
+              ['address', t('ownerForm.address'), 'text', true],
+              ['emergencyContact', t('ownerForm.emergencyContact'), 'text', true],
+              ['paymentMethod', t('ownerForm.billingInfo'), 'text', true],
             ]
               .map(
                 ([name, label, type, required]) =>
@@ -80,19 +83,19 @@ export function render(container, params = {}) {
         <div class="tab-panel hidden" data-panel="horses">
           ${
             !editing
-              ? '<p class="text-sm text-slate-500">Save the owner first, then assign horses.</p>'
+              ? `<p class="text-sm text-slate-500">${t('ownerForm.saveOwnerFirstHorses')}</p>`
               : `
-          <p class="text-sm text-slate-500">Select the horses that belong to this owner.</p>
-          <div class="mt-3 grid gap-3 md:grid-cols-2" data-horse-list>${allHorses.map((horse) => `<label class="flex items-center gap-3 rounded-2xl border border-slate-100 p-4"><input type="checkbox" data-horse-id="${horse.id}" ${horse.ownerId === owner.id ? 'checked' : ''} /><span><span class="block font-medium text-slate-900">${horse.name}</span><span class="block text-sm text-slate-500">${horse.breed} · Stall ${getRecord('stalls', horse.stallId)?.number || '—'}</span></span></label>`).join('')}</div>`
+          <p class="text-sm text-slate-500">${t('ownerForm.selectHorsesHint')}</p>
+          <div class="mt-3 grid gap-3 md:grid-cols-2" data-horse-list>${allHorses.map((horse) => `<label class="flex items-center gap-3 rounded-2xl border border-slate-100 p-4"><input type="checkbox" data-horse-id="${horse.id}" ${horse.ownerId === owner.id ? 'checked' : ''} /><span><span class="block font-medium text-slate-900">${horse.name}</span><span class="block text-sm text-slate-500">${horse.breed} · ${t('horseList.stall')} ${getRecord('stalls', horse.stallId)?.number || '—'}</span></span></label>`).join('')}</div>`
           }
         </div>
 
         <div class="tab-panel hidden" data-panel="contracts">
           ${
             !editing
-              ? '<p class="text-sm text-slate-500">Save the owner first, then add contracts.</p>'
+              ? `<p class="text-sm text-slate-500">${t('ownerForm.saveOwnerFirstContracts')}</p>`
               : `
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-900">Contracts</h3><button type="button" class="btn-ghost" data-add-contract>Add contract</button></div>
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-900">${t('ownerForm.contracts')}</h3><button type="button" class="btn-ghost" data-add-contract>${t('ownerForm.addContract')}</button></div>
           <div class="mt-3 space-y-3" data-contract-list>${contracts.map(contractRowTemplate).join('')}</div>`
           }
         </div>
@@ -100,15 +103,15 @@ export function render(container, params = {}) {
         <div class="tab-panel hidden" data-panel="payments">
           ${
             !editing
-              ? '<p class="text-sm text-slate-500">Save the owner first, then add payments.</p>'
+              ? `<p class="text-sm text-slate-500">${t('ownerForm.saveOwnerFirstPayments')}</p>`
               : `
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-900">Payments</h3><button type="button" class="btn-ghost" data-add-payment>Add payment</button></div>
-          <p class="mt-2 text-sm text-slate-500">Only saved contracts appear in the dropdown. Save a new contract, then reopen this owner to add its payments.</p>
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-900">${t('ownerForm.payments')}</h3><button type="button" class="btn-ghost" data-add-payment>${t('ownerForm.addPayment')}</button></div>
+          <p class="mt-2 text-sm text-slate-500">${t('ownerForm.paymentsHint')}</p>
           <div class="mt-3 space-y-3" data-payment-list>${payments.map(paymentRowTemplate).join('')}</div>`
           }
         </div>
 
-        <div class="mt-6 flex flex-wrap justify-end gap-3"><button type="button" class="btn-ghost" data-cancel>Cancel</button><button type="submit" class="btn-primary">${editing ? 'Save changes' : 'Create owner'}</button></div>
+        <div class="mt-6 flex flex-wrap justify-end gap-3"><button type="button" class="btn-ghost" data-cancel>${t('ownerForm.cancel')}</button><button type="submit" class="btn-primary">${editing ? t('ownerForm.saveChanges') : t('ownerForm.createOwner')}</button></div>
       </form>
     </div>`
 
@@ -259,7 +262,12 @@ export function render(container, params = {}) {
         .forEach((payment) => deleteRecord('payments', payment.id))
     }
 
-    notify(`${payload.name} ${editing ? 'updated' : 'added'} successfully.`, 'success')
+    notify(
+      editing
+        ? t('ownerForm.savedToast', { name: payload.name })
+        : t('ownerForm.createdToast', { name: payload.name }),
+      'success',
+    )
     navigate(`/owners/${ownerId}`)
   })
 }

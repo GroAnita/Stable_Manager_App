@@ -5,6 +5,7 @@ import { notify } from '../components/Notification.js'
 import { getAll, getRecord, updateRecord } from '../services/dataService.js'
 import { formatCurrency, formatDate } from '../utils/helpers.js'
 import { icon } from '../utils/icons.js'
+import { t } from '../i18n/index.js'
 
 export function render(container) {
   const payments = getAll('payments')
@@ -43,40 +44,56 @@ export function render(container) {
         .filter((payment) => payment.status === 'overdue')
         .reduce((sum, payment) => sum + payment.amount, 0),
     }
-    container.innerHTML = `<div class="page-shell"><div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">Payments</h1><p class="mt-2 text-sm text-slate-500">Monitor invoices, due dates and payment status across every boarding contract.</p></div></div><div class="grid gap-4 md:grid-cols-3">${Card({ label: 'Paid this month', value: formatCurrency(summary.paid), icon: icon('dollar', 'h-5 w-5') })}${Card({ label: 'Currently due', value: formatCurrency(summary.due), icon: icon('calendar', 'h-5 w-5') })}${Card({ label: 'Overdue total', value: formatCurrency(summary.overdue), icon: icon('alert', 'h-5 w-5') })}</div><div class="panel p-4"><div class="grid gap-3 lg:grid-cols-[2fr,1fr]"><input class="field" type="search" placeholder="Search by invoice, horse or owner..." value="${search}" data-payment-search /><select class="field" data-payment-filter>${['all', 'paid', 'due', 'overdue'].map((value) => `<option value="${value}" ${filter === value ? 'selected' : ''}>${value === 'all' ? 'All statuses' : value}</option>`).join('')}</select></div></div>${createTable(
+    container.innerHTML = `<div class="page-shell"><div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">${t('paymentList.title')}</h1><p class="mt-2 text-sm text-slate-500">${t('paymentList.subtitle')}</p></div></div><div class="grid gap-4 md:grid-cols-3">${Card({ label: t('paymentList.paidThisMonth'), value: formatCurrency(summary.paid), icon: icon('dollar', 'h-5 w-5') })}${Card({ label: t('paymentList.currentlyDue'), value: formatCurrency(summary.due), icon: icon('calendar', 'h-5 w-5') })}${Card({ label: t('paymentList.overdueTotal'), value: formatCurrency(summary.overdue), icon: icon('alert', 'h-5 w-5') })}</div><div class="panel p-4"><div class="grid gap-3 lg:grid-cols-[2fr,1fr]"><input class="field" type="search" placeholder="${t('paymentList.searchPlaceholder')}" value="${search}" data-payment-search /><select class="field" data-payment-filter>${['all', 'paid', 'due', 'overdue'].map((value) => `<option value="${value}" ${filter === value ? 'selected' : ''}>${value === 'all' ? t('paymentList.allStatuses') : t(`status.${value}`)}</option>`).join('')}</select></div></div>${createTable(
       {
         id: 'payments-table',
         columns: [
-          { key: 'invoiceNumber', label: 'Invoice', render: (payment) => payment.invoiceNumber },
+          {
+            key: 'invoiceNumber',
+            label: t('paymentList.invoice'),
+            render: (payment) => payment.invoiceNumber,
+          },
           {
             key: 'horse',
-            label: 'Horse',
+            label: t('paymentList.horse'),
             sortable: false,
             render: (payment) => getRecord('horses', payment.horseId)?.name || '—',
           },
           {
             key: 'owner',
-            label: 'Owner',
+            label: t('paymentList.owner'),
             sortable: false,
             render: (payment) => getRecord('owners', payment.ownerId)?.name || '—',
           },
-          { key: 'amount', label: 'Amount', render: (payment) => formatCurrency(payment.amount) },
-          { key: 'dueDate', label: 'Due date', render: (payment) => formatDate(payment.dueDate) },
-          { key: 'status', label: 'Status', render: (payment) => Badge(payment.status) },
+          {
+            key: 'amount',
+            label: t('paymentList.amount'),
+            render: (payment) => formatCurrency(payment.amount),
+          },
+          {
+            key: 'dueDate',
+            label: t('paymentList.dueDate'),
+            render: (payment) => formatDate(payment.dueDate),
+          },
+          {
+            key: 'status',
+            label: t('paymentList.status'),
+            render: (payment) => Badge(payment.status),
+          },
           {
             key: 'action',
-            label: 'Action',
+            label: t('paymentList.action'),
             sortable: false,
             render: (payment) =>
               payment.status === 'paid'
-                ? '<span class="text-sm text-slate-400">Settled</span>'
-                : `<button class="btn-ghost px-3 py-2" data-mark-paid="${payment.id}">Mark paid</button>`,
+                ? `<span class="text-sm text-slate-400">${t('paymentList.settled')}</span>`
+                : `<button class="btn-ghost px-3 py-2" data-mark-paid="${payment.id}">${t('paymentList.markPaid')}</button>`,
           },
         ],
         data: filtered,
         sortBy,
         sortDirection,
-        emptyMessage: 'No payments match your filters.',
+        emptyMessage: t('paymentList.noPayments'),
       },
     )}</div>`
     container.querySelector('[data-payment-search]').addEventListener('input', (event) => {
@@ -101,7 +118,7 @@ export function render(container) {
           status: 'paid',
           paidDate: new Date().toISOString().slice(0, 10),
         })
-        notify('Payment marked as paid.', 'success')
+        notify(t('paymentList.markedPaidToast'), 'success')
         render(container)
       }),
     )

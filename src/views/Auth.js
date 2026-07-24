@@ -1,4 +1,5 @@
 import { signIn, signUp } from '../services/authService.js'
+import { t } from '../i18n/index.js'
 
 export function renderAuth(container, { onAuthenticated }) {
   let mode = 'login'
@@ -11,21 +12,21 @@ export function renderAuth(container, { onAuthenticated }) {
       <div class="flex min-h-screen items-center justify-center bg-cream px-4">
         <div class="w-full max-w-md">
           <div class="mb-8 text-center">
-            <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Stable Manager</p>
-            <h1 class="mt-2 text-3xl font-semibold text-forest">${mode === 'login' ? 'Welcome back' : 'Create your account'}</h1>
-            <p class="mt-2 text-sm text-slate-500">${mode === 'login' ? 'Sign in to manage your stable.' : 'Set up your account to get started.'}</p>
+            <div class="flex items-center justify-center gap-2"><img src="/ND-Iconedited.png" alt="" class="h-6 w-6 rounded-md" /><p class="text-xs uppercase tracking-[0.3em] text-slate-400">${t('auth.tagline')}</p></div>
+            <h1 class="mt-2 text-3xl font-semibold text-forest">${mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}</h1>
+            <p class="mt-2 text-sm text-slate-500">${mode === 'login' ? t('auth.signInSubtitle') : t('auth.signUpSubtitle')}</p>
           </div>
           <form id="auth-form" class="panel space-y-4 p-6">
-            ${mode === 'signup' ? '<label><span class="field-label">Full name</span><input class="field" name="fullName" type="text" required /></label>' : ''}
-            <label><span class="field-label">Email</span><input class="field" name="email" type="email" required /></label>
-            <label><span class="field-label">Password</span><input class="field" name="password" type="password" minlength="6" required /></label>
+            ${mode === 'signup' ? `<label><span class="field-label">${t('auth.fullName')}</span><input class="field" name="fullName" type="text" required /></label>` : ''}
+            <label><span class="field-label">${t('auth.email')}</span><input class="field" name="email" type="email" required /></label>
+            <label><span class="field-label">${t('auth.password')}</span><input class="field" name="password" type="password" minlength="6" required /></label>
             ${infoMessage ? `<p class="text-sm text-emerald-700">${infoMessage}</p>` : ''}
             ${errorMessage ? `<p class="text-sm text-red-600">${errorMessage}</p>` : ''}
-            <button type="submit" class="btn-primary w-full" ${submitting ? 'disabled' : ''}>${submitting ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Sign up'}</button>
+            <button type="submit" class="btn-primary w-full" ${submitting ? 'disabled' : ''}>${submitting ? t('auth.pleaseWait') : mode === 'login' ? t('auth.signIn') : t('auth.signUp')}</button>
           </form>
           <p class="mt-4 text-center text-sm text-slate-500">
-            ${mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
-            <button type="button" class="font-medium text-forest hover:underline" data-toggle-mode>${mode === 'login' ? 'Sign up' : 'Sign in'}</button>
+            ${mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount')}
+            <button type="button" class="font-medium text-forest hover:underline" data-toggle-mode>${mode === 'login' ? t('auth.signUp') : t('auth.signIn')}</button>
           </p>
         </div>
       </div>`
@@ -58,14 +59,14 @@ export function renderAuth(container, { onAuthenticated }) {
             onAuthenticated()
           } else {
             submitting = false
-            infoMessage = 'Check your email to confirm your account, then sign in.'
+            infoMessage = t('auth.confirmEmail')
             mode = 'login'
             draw()
           }
         }
       } catch (error) {
         submitting = false
-        errorMessage = error.message || 'Something went wrong. Please try again.'
+        errorMessage = error.message || t('auth.genericError')
         draw()
       }
     })

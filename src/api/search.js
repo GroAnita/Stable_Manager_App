@@ -1,4 +1,6 @@
 import { getAll, getRecord } from '../services/dataService.js'
+import { formatCurrency } from '../utils/helpers.js'
+import { t } from '../i18n/index.js'
 
 const match = (text, query) =>
   String(text || '')
@@ -17,9 +19,9 @@ export function searchAll(term) {
     )
     .map((horse) => ({
       id: `horse-${horse.id}`,
-      type: 'Horse',
+      type: t('search.horse'),
       title: horse.name,
-      subtitle: `${horse.breed} · Stall ${getRecord('stalls', horse.stallId)?.number || '—'}`,
+      subtitle: `${horse.breed} · ${t('horseList.stall')} ${getRecord('stalls', horse.stallId)?.number || '—'}`,
       route: `/horses/${horse.id}`,
     }))
 
@@ -27,7 +29,7 @@ export function searchAll(term) {
     .filter((owner) => [owner.name, owner.email, owner.phone].some((value) => match(value, query)))
     .map((owner) => ({
       id: `owner-${owner.id}`,
-      type: 'Owner',
+      type: t('search.owner'),
       title: owner.name,
       subtitle: owner.email,
       route: `/owners/${owner.id}`,
@@ -39,9 +41,9 @@ export function searchAll(term) {
     )
     .map((stall) => ({
       id: `stall-${stall.id}`,
-      type: 'Stall',
-      title: `Stall ${stall.number}`,
-      subtitle: `${stall.size} · ${stall.status}`,
+      type: t('search.stall'),
+      title: `${t('horseList.stall')} ${stall.number}`,
+      subtitle: `${stall.size} · ${t(`status.${stall.status}`)}`,
       route: '/stalls',
     }))
 
@@ -53,11 +55,21 @@ export function searchAll(term) {
     )
     .map((contract) => ({
       id: `contract-${contract.id}`,
-      type: 'Contract',
-      title: getRecord('horses', contract.horseId)?.name || 'Contract',
-      subtitle: `${contract.status} · Stall ${getRecord('stalls', contract.stallId)?.number || '—'}`,
+      type: t('search.contract'),
+      title: getRecord('horses', contract.horseId)?.name || t('contractList.contractFallback'),
+      subtitle: `${t(`status.${contract.status}`)} · ${t('horseList.stall')} ${getRecord('stalls', contract.stallId)?.number || '—'}`,
       route: '/contracts',
     }))
 
-  return [...horses, ...owners, ...stalls, ...contracts].slice(0, 10)
+  const priceListItems = getAll('priceListItems')
+    .filter((item) => [item.item, item.unit, item.notes].some((value) => match(value, query)))
+    .map((item) => ({
+      id: `price-list-${item.id}`,
+      type: t('search.priceList'),
+      title: item.item,
+      subtitle: `${formatCurrency(item.price)}${item.unit ? ` · ${item.unit}` : ''}`,
+      route: '/price-list',
+    }))
+
+  return [...horses, ...owners, ...stalls, ...contracts, ...priceListItems].slice(0, 10)
 }

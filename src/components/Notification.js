@@ -7,7 +7,8 @@ export function initNotifications() {
   }
   container = document.createElement('div')
   container.id = 'toast-root'
-  container.className = 'fixed right-4 top-4 z-[100] flex w-[min(92vw,24rem)] flex-col gap-3'
+  container.className =
+    'fixed right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[100] flex w-[min(92vw,24rem)] flex-col gap-3'
   document.body.appendChild(container)
 }
 

@@ -10,6 +10,7 @@ import {
   updateRecord,
 } from '../services/dataService.js'
 import { icon } from '../utils/icons.js'
+import { t } from '../i18n/index.js'
 
 /**
  * A stall's operational status.
@@ -72,11 +73,11 @@ export function render(container) {
    */
   const stallForm = (stall = {}) => `
     <form id="stall-form" class="grid gap-4">
-      <label><span class="field-label">Stall number</span><input class="field" name="number" type="text" required value="${stall.number || ''}" /></label>
-      <label><span class="field-label">Size</span><input class="field" name="size" type="text" placeholder="e.g. 3.5 x 3.5m" value="${stall.size || ''}" /></label>
-      <label><span class="field-label">Status</span><select class="field" name="status">${['available', 'occupied', 'reserved', 'maintenance'].map((value) => `<option value="${value}" ${stall.status === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
-      <label><span class="field-label">Notes</span><textarea class="field min-h-24" name="notes">${stall.notes || ''}</textarea></label>
-      <button class="btn-primary" type="submit">${stall.id ? 'Save changes' : 'Add stall'}</button>
+      <label><span class="field-label">${t('stallView.stallNumber')}</span><input class="field" name="number" type="text" required value="${stall.number || ''}" /></label>
+      <label><span class="field-label">${t('stallView.size')}</span><input class="field" name="size" type="text" placeholder="${t('stallView.sizePlaceholder')}" value="${stall.size || ''}" /></label>
+      <label><span class="field-label">${t('stallView.status')}</span><select class="field" name="status">${['available', 'occupied', 'reserved', 'maintenance'].map((value) => `<option value="${value}" ${stall.status === value ? 'selected' : ''}>${t(`status.${value}`)}</option>`).join('')}</select></label>
+      <label><span class="field-label">${t('stallView.notes')}</span><textarea class="field min-h-24" name="notes">${stall.notes || ''}</textarea></label>
+      <button class="btn-primary" type="submit">${stall.id ? t('stallView.saveSubmit') : t('stallView.addSubmit')}</button>
     </form>`
 
   /**
@@ -87,13 +88,13 @@ export function render(container) {
    * @returns {void}
    */
   const openAddStallModal = () => {
-    const modal = openModal({ title: 'Add stall', body: stallForm() })
+    const modal = openModal({ title: t('stallView.addStall'), body: stallForm() })
     modal.element.querySelector('#stall-form').addEventListener('submit', (event) => {
       event.preventDefault()
       const payload = Object.fromEntries(new FormData(event.target).entries())
       createRecord('stalls', { ...payload, horseId: '' })
       modal.close()
-      notify('Stall added.', 'success')
+      notify(t('stallView.addedToast'), 'success')
       draw()
     })
   }
@@ -111,7 +112,7 @@ export function render(container) {
     const stalls = getAll('stalls')
     /** @type {Stall[]} */
     const filtered = stalls.filter((stall) => filter === 'all' || stall.status === filter)
-    container.innerHTML = `<div class="page-shell"><div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">Stall layout</h1><p class="mt-2 text-sm text-slate-500">Add stalls, edit their details and see occupancy, reservations and maintenance at a glance.</p></div><button class="btn-primary" data-add-stall>${icon('plus', 'h-4 w-4')}Add stall</button></div><div class="panel p-4"><select class="field max-w-xs" data-stall-filter>${['all', 'available', 'occupied', 'reserved', 'maintenance'].map((value) => `<option value="${value}" ${filter === value ? 'selected' : ''}>${value === 'all' ? 'All stalls' : value}</option>`).join('')}</select></div>${
+    container.innerHTML = `<div class="page-shell"><div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">${t('stallView.title')}</h1><p class="mt-2 text-sm text-slate-500">${t('stallView.subtitle')}</p></div><button class="btn-primary" data-add-stall>${icon('plus', 'h-4 w-4')}${t('stallView.addStall')}</button></div><div class="panel p-4"><select class="field max-w-xs" data-stall-filter>${['all', 'available', 'occupied', 'reserved', 'maintenance'].map((value) => `<option value="${value}" ${filter === value ? 'selected' : ''}>${value === 'all' ? t('stallView.allStalls') : t(`status.${value}`)}</option>`).join('')}</select></div>${
       filtered.length
         ? `<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">${filtered
             .map((stall) => {
@@ -122,10 +123,10 @@ export function render(container) {
                 maintenance: 'bg-red-50 border-red-200 text-red-900',
               }
               const horse = getRecord('horses', stall.horseId)
-              return `<button class="rounded-[1.25rem] border p-4 text-left shadow-card ${palette[stall.status]}" data-stall-open="${stall.id}"><div class="flex items-center justify-between"><p class="text-sm uppercase tracking-[0.25em]">Stall</p>${Badge(stall.status)}</div><h3 class="mt-3 text-2xl font-semibold">${stall.number}</h3><p class="mt-2 text-sm opacity-80">${stall.size || 'No size set'}</p><p class="mt-4 text-sm opacity-80">${horse ? horse.name : stall.status === 'reserved' ? 'Reserved' : stall.status === 'maintenance' ? 'Maintenance' : 'Ready'}</p></button>`
+              return `<button class="rounded-[1.25rem] border p-4 text-left shadow-card ${palette[stall.status]}" data-stall-open="${stall.id}"><div class="flex items-center justify-between"><p class="text-sm uppercase tracking-[0.25em]">${t('stallView.stallLabel')}</p>${Badge(stall.status)}</div><h3 class="mt-3 text-2xl font-semibold">${stall.number}</h3><p class="mt-2 text-sm opacity-80">${stall.size || t('stallView.noSizeSet')}</p><p class="mt-4 text-sm opacity-80">${horse ? horse.name : stall.status === 'reserved' ? t('status.reserved') : stall.status === 'maintenance' ? t('status.maintenance') : t('stallView.ready')}</p></button>`
             })
             .join('')}</div>`
-        : '<div class="panel p-10 text-center text-sm text-slate-500">No stalls yet. Click "Add stall" to create your first one.</div>'
+        : `<div class="panel p-10 text-center text-sm text-slate-500">${t('stallView.noStalls')}</div>`
     }</div>`
 
     container.querySelector('[data-stall-filter]').addEventListener('change', (event) => {
@@ -139,34 +140,34 @@ export function render(container) {
         const horse = getRecord('horses', stall.horseId)
         const owner = horse ? getRecord('owners', horse.ownerId) : null
         const modal = openModal({
-          title: `Stall ${stall.number}`,
-          body: `<div class="space-y-4 text-sm text-slate-600"><div><span class="font-medium text-slate-800">Current horse:</span> ${horse?.name || 'None assigned'}</div><div><span class="font-medium text-slate-800">Owner:</span> ${owner?.name || '—'}</div><hr class="border-slate-200" />${stallForm(stall)}</div>`,
-          footer: `<button type="button" class="btn-ghost" data-delete-stall>Delete stall</button>`,
+          title: t('stallView.stallTitle', { number: stall.number }),
+          body: `<div class="space-y-4 text-sm text-slate-600"><div><span class="font-medium text-slate-800">${t('stallView.currentHorse')}</span> ${horse?.name || t('stallView.noneAssigned')}</div><div><span class="font-medium text-slate-800">${t('stallView.owner')}</span> ${owner?.name || '—'}</div><hr class="border-slate-200" />${stallForm(stall)}</div>`,
+          footer: `<button type="button" class="btn-ghost" data-delete-stall>${t('stallView.deleteStall')}</button>`,
         })
         modal.element.querySelector('#stall-form').addEventListener('submit', (event) => {
           event.preventDefault()
           const payload = Object.fromEntries(new FormData(event.target).entries())
           updateRecord('stalls', stall.id, payload)
           modal.close()
-          notify('Stall updated.', 'success')
+          notify(t('stallView.updatedToast'), 'success')
           draw()
         })
         modal.element.querySelector('[data-delete-stall]').addEventListener('click', async () => {
           if (horse) {
-            notify('Unassign the horse from this stall before deleting it.', 'error')
+            notify(t('stallView.unassignFirst'), 'error')
             return
           }
           if (
             !(await confirmDialog({
-              title: 'Delete stall',
-              message: `This will permanently delete Stall ${stall.number}.`,
-              confirmText: 'Delete stall',
+              title: t('stallView.deleteStall'),
+              message: t('stallView.deleteConfirmMessage', { number: stall.number }),
+              confirmText: t('stallView.deleteConfirmButton'),
             }))
           )
             return
           deleteRecord('stalls', stall.id)
           modal.close()
-          notify('Stall deleted.', 'success')
+          notify(t('stallView.deletedToast'), 'success')
           draw()
         })
       }),

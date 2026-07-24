@@ -13,6 +13,7 @@ const TABLES = {
   tasks: 'tasks',
   feedingPlans: 'feeding_plans',
   medicalRecords: 'medical_records',
+  priceListItems: 'price_list_items',
 }
 
 const safeJsonParse = (value, fallback) => {
@@ -64,7 +65,7 @@ const mappers = {
     fromDb: (row) => ({
       id: row.id,
       name: row.name || '',
-      photo: row.photo_url || '🐴',
+      photo: row.photo_url || '',
       breed: row.breed || '',
       age: row.age ?? '',
       gender: row.gender || '',
@@ -82,6 +83,7 @@ const mappers = {
       birthday: row.birthday || '',
       status: row.status || 'active',
       notes: row.notes || '',
+      extras: safeJsonParse(row.extras, []),
     }),
     toDb: (record) => ({
       name: record.name,
@@ -103,6 +105,7 @@ const mappers = {
       birthday: record.birthday || null,
       status: record.status || 'active',
       notes: record.notes || null,
+      extras: JSON.stringify(record.extras || []),
     }),
   },
   stalls: {
@@ -159,6 +162,7 @@ const mappers = {
       paidDate: row.paid_date || '',
       status: row.status || 'due',
       invoiceNumber: row.invoice_number || '',
+      notes: row.notes || '',
     }),
     toDb: (record) => ({
       contract_id: record.contractId,
@@ -168,6 +172,7 @@ const mappers = {
       paid_date: record.paidDate || null,
       invoice_number: record.invoiceNumber || null,
       status: record.status || 'due',
+      notes: record.notes || null,
     }),
   },
   calendarEvents: {
@@ -238,6 +243,7 @@ const mappers = {
         supplements: row.evening_supplements || '',
       },
       specialInstructions: row.special_instructions || '',
+      extras: safeJsonParse(row.extras, []),
     }),
     toDb: (record) => ({
       horse_id: record.horseId,
@@ -249,6 +255,7 @@ const mappers = {
       evening_feed: record.evening?.grain || null,
       evening_supplements: record.evening?.supplements || null,
       special_instructions: record.specialInstructions || null,
+      extras: JSON.stringify(record.extras || []),
     }),
   },
   medicalRecords: {
@@ -270,6 +277,23 @@ const mappers = {
       veterinarian: record.vet || null,
     }),
   },
+  priceListItems: {
+    fromDb: (row) => ({
+      id: row.id,
+      item: row.item || '',
+      category: row.category || '',
+      unit: row.unit || '',
+      price: row.price ?? 0,
+      notes: row.notes || '',
+    }),
+    toDb: (record) => ({
+      item: record.item,
+      category: record.category || null,
+      unit: record.unit || null,
+      price: Number(record.price) || 0,
+      notes: record.notes || null,
+    }),
+  },
 }
 
 async function fetchAll(entity) {
@@ -289,6 +313,7 @@ export async function pullAllFromSupabase() {
     tasks,
     feedingPlans,
     medicalRecords,
+    priceListItems,
   ] = await Promise.all([
     fetchAll('owners'),
     fetchAll('horses'),
@@ -299,6 +324,7 @@ export async function pullAllFromSupabase() {
     fetchAll('tasks'),
     fetchAll('feedingPlans'),
     fetchAll('medicalRecords'),
+    fetchAll('priceListItems'),
   ])
 
   // stalls.horseId and payments.horseId aren't columns in their own tables —
@@ -324,6 +350,7 @@ export async function pullAllFromSupabase() {
   storage.set(STORAGE_KEYS.tasks, tasks)
   storage.set(STORAGE_KEYS.feedingPlans, feedingPlans)
   storage.set(STORAGE_KEYS.medicalRecords, medicalRecords)
+  storage.set(STORAGE_KEYS.priceListItems, priceListItems)
 
   await pullSettings()
 }

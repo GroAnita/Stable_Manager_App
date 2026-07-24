@@ -7,6 +7,7 @@ import {
   resetData,
   upsertSettings,
 } from '../services/dataService.js'
+import { getLanguage, setLanguage, t } from '../i18n/index.js'
 
 /**
  * Supported application currencies.
@@ -39,7 +40,7 @@ import {
  *
  * The view allows the user to:
  * - Edit stable and manager information.
- * - Select currency and calendar preferences.
+ * - Select currency, language and calendar preferences.
  * - Enable compact display mode.
  * - Export application data as JSON.
  * - Import application data from JSON.
@@ -53,27 +54,28 @@ import {
 export function render(container) {
   /** @type {StableSettings} */
   const settings = getSettings()
+  const language = getLanguage()
 
   container.innerHTML = `
     <div class="page-shell">
       <div>
-        <h1 class="text-3xl font-semibold text-slate-900">Settings</h1>
+        <h1 class="text-3xl font-semibold text-slate-900">${t('settings.title')}</h1>
         <p class="mt-2 text-sm text-slate-500">
-          Configure stable details, display preferences and data management tools.
+          ${t('settings.subtitle')}
         </p>
       </div>
 
       <div class="grid gap-6 xl:grid-cols-[1.4fr,1fr]">
         <form id="settings-form" class="panel p-6">
-          <h2 class="section-title">Stable information</h2>
+          <h2 class="section-title">${t('settings.stableInformation')}</h2>
 
           <div class="mt-5 grid gap-5 md:grid-cols-2">
             ${[
-              ['stableName', 'Stable name', 'text'],
-              ['managerName', 'Manager name', 'text'],
-              ['phone', 'Phone', 'tel'],
-              ['email', 'Email', 'email'],
-              ['address', 'Address', 'text'],
+              ['stableName', t('settings.stableName'), 'text'],
+              ['managerName', t('settings.managerName'), 'text'],
+              ['phone', t('settings.phone'), 'tel'],
+              ['email', t('settings.email'), 'email'],
+              ['address', t('settings.address'), 'text'],
             ]
               .map(
                 ([name, label, type]) => `
@@ -91,7 +93,7 @@ export function render(container) {
               .join('')}
 
             <label>
-              <span class="field-label">Currency</span>
+              <span class="field-label">${t('settings.currency')}</span>
               <select class="field" name="currency">
                 ${['EUR', 'SEK', 'NOK', 'GBP']
                   .map(
@@ -108,7 +110,15 @@ export function render(container) {
             </label>
 
             <label>
-              <span class="field-label">Default calendar view</span>
+              <span class="field-label">${t('settings.language')}</span>
+              <select class="field" name="language">
+                <option value="en" ${language === 'en' ? 'selected' : ''}>English</option>
+                <option value="no" ${language === 'no' ? 'selected' : ''}>Norsk</option>
+              </select>
+            </label>
+
+            <label>
+              <span class="field-label">${t('settings.defaultCalendarView')}</span>
               <select class="field" name="defaultCalendarView">
                 ${['month', 'week', 'day']
                   .map(
@@ -134,21 +144,21 @@ export function render(container) {
                 ${settings.compactMode ? 'checked' : ''}
               />
               <span class="text-sm text-slate-600">
-                Enable compact display spacing
+                ${t('settings.compactMode')}
               </span>
             </label>
           </div>
 
           <div class="mt-6 flex justify-end">
             <button class="btn-primary" type="submit">
-              Save settings
+              ${t('settings.saveSettings')}
             </button>
           </div>
         </form>
 
         <div class="space-y-6">
           <div class="panel p-6">
-            <h2 class="section-title">Data management</h2>
+            <h2 class="section-title">${t('settings.dataManagement')}</h2>
 
             <div class="mt-5 space-y-3">
               <button
@@ -156,14 +166,14 @@ export function render(container) {
                 type="button"
                 data-export
               >
-                Export data <span>JSON</span>
+                ${t('settings.exportData')} <span>${t('settings.json')}</span>
               </button>
 
               <label
                 class="btn-ghost flex w-full cursor-pointer justify-between"
                 for="import-data"
               >
-                Import data <span>Upload</span>
+                ${t('settings.importData')} <span>${t('settings.upload')}</span>
               </label>
 
               <input
@@ -178,16 +188,15 @@ export function render(container) {
                 type="button"
                 data-clear
               >
-                Reload data <span>Reset</span>
+                ${t('settings.reloadData')} <span>${t('settings.reset')}</span>
               </button>
             </div>
           </div>
 
           <div class="panel p-6">
-            <h2 class="section-title">Notes</h2>
+            <h2 class="section-title">${t('settings.notes')}</h2>
             <p class="mt-4 text-sm text-slate-500">
-              Application data is stored in Supabase and cached locally for
-              display. Export regularly if you need an additional backup.
+              ${t('settings.notesBody')}
             </p>
           </div>
         </div>
@@ -210,8 +219,19 @@ export function render(container) {
 
     payload.compactMode = form.elements.namedItem('compactMode').checked
 
+    // Language is a per-device preference, not part of the stable's synced
+    // settings, so it's handled separately from upsertSettings().
+    const selectedLanguage = payload.language
+    delete payload.language
+    const languageChanged = selectedLanguage !== language
+
     upsertSettings(payload)
-    notify('Settings saved.', 'success')
+    if (languageChanged) setLanguage(selectedLanguage)
+    notify(t('settings.savedToast'), 'success')
+    // The app has no reactive re-render system, so a reload is the simplest
+    // reliable way to apply a language switch across every already-rendered
+    // screen without risking half-translated leftover DOM state.
+    if (languageChanged) window.location.reload()
   }
 
   /**
@@ -230,7 +250,7 @@ export function render(container) {
     link.click()
 
     URL.revokeObjectURL(url)
-    notify('Data export created.', 'success')
+    notify(t('settings.exportedToast'), 'success')
   }
 
   /**
@@ -249,7 +269,7 @@ export function render(container) {
     const payload = JSON.parse(await file.text())
 
     await importData(payload)
-    notify('Data imported successfully.', 'success')
+    notify(t('settings.importedToast'), 'success')
     render(container)
   }
 
@@ -262,16 +282,15 @@ export function render(container) {
    */
   const handleReload = async () => {
     const confirmed = await confirmDialog({
-      title: 'Reload data',
-      message:
-        'This will clear the local cache and re-download the latest data from your Supabase stable.',
-      confirmText: 'Reload data',
+      title: t('settings.reloadConfirmTitle'),
+      message: t('settings.reloadConfirmMessage'),
+      confirmText: t('settings.reloadConfirmButton'),
     })
 
     if (!confirmed) return
 
     await resetData()
-    notify('Data reloaded from server.', 'success')
+    notify(t('settings.reloadedToast'), 'success')
     render(container)
   }
 

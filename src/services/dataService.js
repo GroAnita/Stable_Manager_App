@@ -1,6 +1,7 @@
 import { storage } from './storage.js'
 import { generateId, setCurrency } from '../utils/helpers.js'
 import { notify } from '../components/Notification.js'
+import { t } from '../i18n/index.js'
 import {
   pullAllFromSupabase,
   pushCreate,
@@ -20,6 +21,7 @@ export const STORAGE_KEYS = {
   tasks: `${PREFIX}:tasks`,
   feedingPlans: `${PREFIX}:feedingPlans`,
   medicalRecords: `${PREFIX}:medicalRecords`,
+  priceListItems: `${PREFIX}:priceListItems`,
   settings: `${PREFIX}:settings`,
 }
 
@@ -1175,8 +1177,11 @@ export function buildNotifications({
       notices.push({
         id: `payment-${payment.id}`,
         type: 'warning',
-        title: 'Overdue payment',
-        message: `${getRecord('horses', payment.horseId)?.name || 'Unknown horse'} invoice ${payment.invoiceNumber} is overdue.`,
+        title: t('notifications.overduePaymentTitle'),
+        message: t('notifications.overduePaymentMessage', {
+          horse: getRecord('horses', payment.horseId)?.name || t('notifications.unknownHorse'),
+          invoice: payment.invoiceNumber,
+        }),
         date: payment.dueDate,
       }),
     )
@@ -1187,8 +1192,11 @@ export function buildNotifications({
       notices.push({
         id: `vaccination-${horse.id}`,
         type: 'info',
-        title: 'Vaccination follow-up',
-        message: `${horse.name} has vaccination status: ${horse.vaccinationStatus}.`,
+        title: t('notifications.vaccinationFollowUpTitle'),
+        message: t('notifications.vaccinationFollowUpMessage', {
+          horse: horse.name,
+          status: t(`status.${horse.vaccinationStatus.toLowerCase().replace(/\s+/g, '-')}`),
+        }),
         date: horse.arrivalDate,
       }),
     )
@@ -1199,8 +1207,14 @@ export function buildNotifications({
       notices.push({
         id: `event-${event.id}`,
         type: event.type === 'farrier' ? 'info' : 'success',
-        title: `${event.type === 'farrier' ? 'Farrier' : 'Vet'} due`,
-        message: `${event.title} on ${event.date} at ${event.time}.`,
+        title: t(
+          event.type === 'farrier' ? 'notifications.farrierDueTitle' : 'notifications.vetDueTitle',
+        ),
+        message: t('notifications.eventMessage', {
+          title: event.title,
+          date: event.date,
+          time: event.time,
+        }),
         date: event.date,
       }),
     )
@@ -1213,8 +1227,11 @@ export function buildNotifications({
       notices.push({
         id: `contract-${contract.id}`,
         type: 'warning',
-        title: 'Contract ending soon',
-        message: `${getRecord('horses', contract.horseId)?.name || 'Contract'} ends on ${contract.endDate}.`,
+        title: t('notifications.contractEndingTitle'),
+        message: t('notifications.contractEndingMessage', {
+          horse: getRecord('horses', contract.horseId)?.name || t('notifications.contractFallback'),
+          date: contract.endDate,
+        }),
         date: contract.endDate,
       }),
     )

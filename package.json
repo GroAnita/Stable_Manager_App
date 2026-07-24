@@ -11,6 +11,7 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^7.6.8",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",

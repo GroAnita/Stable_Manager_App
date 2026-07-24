@@ -9,6 +9,7 @@ import * as StallView from '../views/StallView.js'
 import * as ContractList from '../views/ContractList.js'
 import * as ContractForm from '../views/ContractForm.js'
 import * as PaymentList from '../views/PaymentList.js'
+import * as PriceList from '../views/PriceList.js'
 import * as CalendarView from '../views/CalendarView.js'
 import * as TaskList from '../views/TaskList.js'
 import * as Reports from '../views/Reports.js'
@@ -31,6 +32,7 @@ const routes = [
   { path: '/contracts/new', view: ContractForm },
   { path: '/contracts/:id/edit', view: ContractForm },
   { path: '/payments', view: PaymentList },
+  { path: '/price-list', view: PriceList },
   { path: '/calendar', view: CalendarView },
   { path: '/tasks', view: TaskList },
   { path: '/reports', view: Reports },

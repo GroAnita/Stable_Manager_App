@@ -1,8 +1,9 @@
 import { icon } from '../utils/icons.js'
+import { t } from '../i18n/index.js'
 
 export function SearchBar({
   id = 'global-search',
-  placeholder = 'Search horses, owners, stalls, contracts...',
+  placeholder = t('appLayout.searchPlaceholder'),
 } = {}) {
   return `
     <div class="relative w-full min-w-0 max-w-xl">

@@ -1,3 +1,8 @@
+import { getLanguage, t } from '../i18n/index.js'
+
+const LOCALES = { en: 'en-GB', no: 'nb-NO' }
+const currentLocale = () => LOCALES[getLanguage()] || 'en-GB'
+
 const HTML_ESCAPE_MAP = {
   '&': '&amp;',
   '<': '&lt;',
@@ -26,7 +31,7 @@ export function formatDate(dateStr, options = { day: 'numeric', month: 'short', 
   if (!dateStr) return '—'
   const date = new Date(dateStr)
   if (Number.isNaN(date.getTime())) return dateStr
-  return new Intl.DateTimeFormat('en-GB', options).format(date)
+  return new Intl.DateTimeFormat(currentLocale(), options).format(date)
 }
 
 let currentCurrency = 'EUR'
@@ -36,7 +41,7 @@ export function setCurrency(code) {
 }
 
 export function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IE', {
+  return new Intl.NumberFormat(currentLocale(), {
     style: 'currency',
     currency: currentCurrency,
     maximumFractionDigits: 0,
@@ -70,7 +75,7 @@ export function debounce(fn, delay = 250) {
 export function formatRelativeTime(dateStr) {
   if (!dateStr) return '—'
   const seconds = Math.round((new Date(dateStr) - new Date()) / 1000)
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+  const rtf = new Intl.RelativeTimeFormat(getLanguage(), { numeric: 'auto' })
   const ranges = [
     ['year', 31536000],
     ['month', 2592000],
@@ -83,7 +88,20 @@ export function formatRelativeTime(dateStr) {
     if (Math.abs(seconds) >= value || unit === 'minute')
       return rtf.format(Math.round(seconds / value), unit)
   }
-  return 'just now'
+  return t('common.justNow')
+}
+
+/**
+ * Renders a horse's profile photo if it has one (a signed Supabase Storage
+ * URL), otherwise falls back to a letter avatar. `classes` should describe
+ * size/shape only (e.g. 'h-14 w-14 rounded-2xl text-2xl') — this adds
+ * whatever else each variant needs.
+ */
+export function horseAvatarHtml(horse, classes) {
+  const hasPhoto = horse.photo && /^https?:\/\//.test(horse.photo)
+  return hasPhoto
+    ? `<div class="${classes} overflow-hidden bg-forest/10"><img src="${escapeHtml(horse.photo)}" alt="" class="h-full w-full object-cover" /></div>`
+    : `<div class="${classes} flex items-center justify-center bg-forest/10 font-semibold text-forest">${escapeHtml(horse.name.charAt(0))}</div>`
 }
 
 export function getStatusColor(status = '') {

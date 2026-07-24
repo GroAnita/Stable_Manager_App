@@ -5,6 +5,7 @@ import { notify } from '../components/Notification.js'
 import { deleteContractCascade, getAll, getRecord } from '../services/dataService.js'
 import { formatCurrency, formatDate, daysUntil } from '../utils/helpers.js'
 import { icon } from '../utils/icons.js'
+import { t } from '../i18n/index.js'
 import { navigate } from '../router/index.js'
 
 export function render(container) {
@@ -12,6 +13,13 @@ export function render(container) {
   let filter = 'all',
     sortBy = 'endDate',
     sortDirection = 'asc'
+  const filters = ['all', 'active', 'ending soon', 'expired']
+  const filterLabels = {
+    all: t('contractList.filterAll'),
+    active: t('contractList.filterActive'),
+    'ending soon': t('contractList.filterEndingSoon'),
+    expired: t('contractList.filterExpired'),
+  }
   const draw = () => {
     const filtered = contracts
       .filter((contract) =>
@@ -28,39 +36,47 @@ export function render(container) {
           ? String(a[sortBy]).localeCompare(String(b[sortBy]))
           : String(b[sortBy]).localeCompare(String(a[sortBy])),
       )
-    container.innerHTML = `<div class="page-shell"><div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">Contracts</h1><p class="mt-2 text-sm text-slate-500">Track boarding agreements, deposits and renewals with confidence.</p></div><button class="btn-primary" data-add-contract>${icon('plus', 'h-4 w-4')}Add contract</button></div><div class="panel p-4"><div class="flex flex-wrap gap-2">${['all', 'active', 'ending soon', 'expired'].map((item) => `<button class="${filter === item ? 'bg-forest text-white' : 'bg-white text-slate-600'} rounded-xl px-4 py-2 text-sm font-medium" data-filter="${item}">${item}</button>`).join('')}</div></div>${createTable(
+    container.innerHTML = `<div class="page-shell"><div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">${t('contractList.title')}</h1><p class="mt-2 text-sm text-slate-500">${t('contractList.subtitle')}</p></div><button class="btn-primary" data-add-contract>${icon('plus', 'h-4 w-4')}${t('contractList.addContract')}</button></div><div class="panel p-4"><div class="flex flex-wrap gap-2">${filters.map((item) => `<button class="${filter === item ? 'bg-forest text-white' : 'bg-white text-slate-600'} rounded-xl px-4 py-2 text-sm font-medium" data-filter="${item}">${filterLabels[item]}</button>`).join('')}</div></div>${createTable(
       {
         id: 'contracts-table',
         columns: [
           {
             key: 'horseId',
-            label: 'Horse',
+            label: t('contractList.horse'),
             render: (contract) => getRecord('horses', contract.horseId)?.name || '—',
           },
           {
             key: 'ownerId',
-            label: 'Owner',
+            label: t('contractList.owner'),
             render: (contract) => getRecord('owners', contract.ownerId)?.name || '—',
           },
           {
             key: 'monthlyRent',
-            label: 'Rent',
+            label: t('contractList.rent'),
             render: (contract) => formatCurrency(contract.monthlyRent),
           },
-          { key: 'endDate', label: 'End date', render: (contract) => formatDate(contract.endDate) },
-          { key: 'status', label: 'Status', render: (contract) => Badge(contract.status) },
+          {
+            key: 'endDate',
+            label: t('contractList.endDate'),
+            render: (contract) => formatDate(contract.endDate),
+          },
+          {
+            key: 'status',
+            label: t('contractList.status'),
+            render: (contract) => Badge(contract.status),
+          },
           {
             key: 'actions',
-            label: 'Actions',
+            label: t('contractList.actions'),
             sortable: false,
             render: (contract) =>
-              `<div class="flex gap-2"><button class="btn-ghost px-3 py-2" data-edit-contract="${contract.id}">Edit</button><button class="btn-ghost px-3 py-2" data-delete-contract="${contract.id}">Delete</button></div>`,
+              `<div class="flex gap-2"><button class="btn-ghost px-3 py-2" data-edit-contract="${contract.id}">${t('contractList.edit')}</button><button class="btn-ghost px-3 py-2" data-delete-contract="${contract.id}">${t('contractList.delete')}</button></div>`,
           },
         ],
         data: filtered,
         sortBy,
         sortDirection,
-        emptyMessage: 'No contracts available for this filter.',
+        emptyMessage: t('contractList.noContracts'),
       },
     )}</div>`
     container
@@ -93,14 +109,19 @@ export function render(container) {
         const contract = getRecord('contracts', id)
         if (
           !(await confirmDialog({
-            title: 'Delete contract',
-            message: 'Remove this contract and all linked payment records?',
-            confirmText: 'Delete',
+            title: t('contractList.deleteConfirmTitle'),
+            message: t('contractList.deleteConfirmMessage'),
+            confirmText: t('contractList.deleteConfirmButton'),
           }))
         )
           return
         deleteContractCascade(id)
-        notify(`${getRecord('horses', contract.horseId)?.name || 'Contract'} removed.`, 'success')
+        notify(
+          t('contractList.deletedToast', {
+            name: getRecord('horses', contract.horseId)?.name || t('contractList.contractFallback'),
+          }),
+          'success',
+        )
         render(container)
       }),
     )
