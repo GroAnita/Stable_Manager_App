@@ -12,7 +12,7 @@ export function renderAuth(container, { onAuthenticated }) {
       <div class="flex min-h-screen items-center justify-center bg-cream px-4">
         <div class="w-full max-w-md">
           <div class="mb-8 text-center">
-            <div class="flex items-center justify-center gap-2"><img src="/ND-Iconedited.png" alt="" class="h-6 w-6 rounded-md" /><p class="text-xs uppercase tracking-[0.3em] text-slate-400">${t('auth.tagline')}</p></div>
+            <div class="flex items-center justify-center gap-2"><img src="${import.meta.env.BASE_URL}ND-Iconedited.png" alt="" class="h-6 w-6 rounded-md" /><p class="text-xs uppercase tracking-[0.3em] text-slate-400">${t('auth.tagline')}</p></div>
             <h1 class="mt-2 text-3xl font-semibold text-forest">${mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}</h1>
             <p class="mt-2 text-sm text-slate-500">${mode === 'login' ? t('auth.signInSubtitle') : t('auth.signUpSubtitle')}</p>
           </div>
