@@ -16,6 +16,15 @@ export function render(container, params = {}) {
   const owner = editing ? getRecord('owners', params.id) : null
   const allHorses = getAll('horses')
   const allStalls = getAll('stalls')
+  const hayItems = getAll('priceListItems').filter((item) => item.category === 'Hay')
+  const beddingItems = getAll('priceListItems').filter((item) => item.category === 'Bedding')
+  const priceItemOptions = (items, selectedId) =>
+    items
+      .map(
+        (item) =>
+          `<option value="${item.id}" ${selectedId === item.id ? 'selected' : ''}>${item.item}</option>`,
+      )
+      .join('')
   const contracts = editing
     ? getAll('contracts').filter((contract) => contract.ownerId === owner.id)
     : []
@@ -38,6 +47,10 @@ export function render(container, params = {}) {
       <label><span class="field-label">${t('ownerForm.contractStatus')}</span><select class="field" data-field="status">${['active', 'expired', 'cancelled'].map((value) => `<option value="${value}" ${row.status === value ? 'selected' : ''}>${t(`status.${value}`)}</option>`).join('')}</select></label>
       <label><span class="field-label">${t('ownerForm.monthlyRent')}</span><input class="field" type="number" data-field="monthlyRent" value="${row.monthlyRent ?? ''}" /></label>
       <label><span class="field-label">${t('ownerForm.deposit')}</span><input class="field" type="number" data-field="deposit" value="${row.deposit ?? ''}" /></label>
+      <label><span class="field-label">${t('contractForm.hayItem')}</span><select class="field" data-field="hayPriceListItemId"><option value="">${t('contractForm.selectHayItem')}</option>${priceItemOptions(hayItems, row.hayPriceListItemId)}</select></label>
+      <label><span class="field-label">${t('contractForm.hayQuantity')}</span><input class="field" type="number" step="0.01" min="0" data-field="includedHayKg" value="${row.includedHayKg ?? ''}" /></label>
+      <label><span class="field-label">${t('contractForm.beddingItem')}</span><select class="field" data-field="beddingPriceListItemId"><option value="">${t('contractForm.selectBeddingItem')}</option>${priceItemOptions(beddingItems, row.beddingPriceListItemId)}</select></label>
+      <label><span class="field-label">${t('contractForm.beddingQuantity')}</span><input class="field" type="number" step="0.01" min="0" data-field="beddingQuantity" value="${row.beddingQuantity ?? ''}" /></label>
       <label><span class="field-label">${t('ownerForm.startDate')}</span><input class="field" type="date" data-field="startDate" value="${row.startDate || ''}" /></label>
       <label><span class="field-label">${t('ownerForm.endDate')}</span><input class="field" type="date" data-field="endDate" value="${row.endDate || ''}" /></label>
       <label class="md:col-span-2 xl:col-span-3"><span class="field-label">${t('ownerForm.includedServices')}</span><textarea class="field min-h-16" data-field="includedServices">${row.includedServices || ''}</textarea></label>
@@ -214,6 +227,12 @@ export function render(container, params = {}) {
           status: row.querySelector('[data-field="status"]').value,
           monthlyRent: Number(row.querySelector('[data-field="monthlyRent"]').value) || 0,
           deposit: Number(row.querySelector('[data-field="deposit"]').value) || 0,
+          hayPriceListItemId: row.querySelector('[data-field="hayPriceListItemId"]').value,
+          includedHayKg: row.querySelector('[data-field="includedHayKg"]').value
+            ? Number(row.querySelector('[data-field="includedHayKg"]').value)
+            : '',
+          beddingPriceListItemId: row.querySelector('[data-field="beddingPriceListItemId"]').value,
+          beddingQuantity: Number(row.querySelector('[data-field="beddingQuantity"]').value) || 0,
           startDate: row.querySelector('[data-field="startDate"]').value,
           endDate: row.querySelector('[data-field="endDate"]').value,
           includedServices: row.querySelector('[data-field="includedServices"]').value,

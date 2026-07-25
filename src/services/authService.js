@@ -53,3 +53,18 @@ export async function createStable({ name, address, city, postalCode, phone, ema
   if (error) throw error
   return data
 }
+
+export async function inviteOwnerToPortal({ ownerId, email, fullName }) {
+  const { data, error } = await supabase.functions.invoke('invite-owner', {
+    body: { ownerId, email, fullName },
+  })
+  if (error) {
+    // A non-2xx response surfaces as a FunctionsHttpError with the raw
+    // Response in `context` rather than our {error} JSON body — try to pull
+    // the actual message out of it before falling back to the generic one.
+    const detail = await error.context?.json?.().catch(() => null)
+    throw new Error(detail?.error || error.message)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}

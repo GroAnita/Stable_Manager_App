@@ -1,5 +1,11 @@
 import { storage } from './storage.js'
-import { generateId, setCurrency } from '../utils/helpers.js'
+import {
+  currentBillingCycleDays,
+  currentBillingCycleDueDate,
+  formatCurrency,
+  generateId,
+  setCurrency,
+} from '../utils/helpers.js'
 import { notify } from '../components/Notification.js'
 import { t } from '../i18n/index.js'
 import {
@@ -1006,6 +1012,55 @@ function syncHorseStall(horse, previous = null) {
   saveAll('stalls', stalls)
 }
 
+// Rent/hay/bedding are baked into the current cycle's invoice amount as soon
+// as it's created (by generate_monthly_invoices() or the extras logger), so
+// editing a contract mid-cycle otherwise leaves that invoice stale. Any
+// extras already logged against it are tracked as structured entries with a
+// paymentId (not parsed out of notes text), so they carry over untouched.
+function recalcOpenInvoiceForContract(contract) {
+  if (contract.status !== 'active') return
+  const dueDate = currentBillingCycleDueDate()
+  const payment = getAll('payments').find(
+    (item) => item.contractId === contract.id && item.dueDate === dueDate && item.status !== 'paid',
+  )
+  if (!payment) return
+
+  const round2 = (value) => Math.round(value * 100) / 100
+  const hayItem =
+    contract.hayPriceListItemId && getRecord('priceListItems', contract.hayPriceListItemId)
+  const beddingItem =
+    contract.beddingPriceListItemId && getRecord('priceListItems', contract.beddingPriceListItemId)
+  const cycleDays = currentBillingCycleDays()
+  const rent = Number(contract.monthlyRent) || 0
+  const hayCharge =
+    contract.includedHayKg && hayItem
+      ? round2(contract.includedHayKg * cycleDays * hayItem.price * 1.25)
+      : 0
+  const beddingCharge =
+    contract.beddingQuantity && beddingItem
+      ? round2(contract.beddingQuantity * beddingItem.price * 1.25)
+      : 0
+
+  const boardLines = []
+  if (rent) boardLines.push(t('extrasLogger.monthlyBoardLine', { amount: formatCurrency(rent) }))
+  if (hayCharge)
+    boardLines.push(t('extrasLogger.monthlyHayLine', { amount: formatCurrency(hayCharge) }))
+  if (beddingCharge)
+    boardLines.push(t('extrasLogger.monthlyBeddingLine', { amount: formatCurrency(beddingCharge) }))
+
+  const horse = getRecord('horses', contract.horseId)
+  const feedingPlan = getAll('feedingPlans').find((item) => item.horseId === contract.horseId)
+  const extraEntries = [...(horse?.extras || []), ...(feedingPlan?.extras || [])].filter(
+    (entry) => entry.paymentId === payment.id,
+  )
+  const extrasTotal = extraEntries.reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0)
+
+  const amount = round2(rent + hayCharge + beddingCharge + extrasTotal)
+  const notes = [...boardLines, ...extraEntries.map((entry) => entry.invoiceLine)].join('\n')
+  if (amount === payment.amount && notes === payment.notes) return
+  updateRecord('payments', payment.id, { amount, notes }, { silent: true })
+}
+
 function syncContract(contract) {
   const horse = getRecord('horses', contract.horseId)
   if (horse)
@@ -1015,6 +1070,7 @@ function syncContract(contract) {
       { ownerId: contract.ownerId, stallId: contract.stallId },
       { silent: true },
     )
+  recalcOpenInvoiceForContract(contract)
 }
 
 export function createRecord(entity, data) {

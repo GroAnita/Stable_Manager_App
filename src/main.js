@@ -2,8 +2,10 @@ import './styles/main.css'
 import { initApp } from './layouts/AppLayout.js'
 import { renderAuth } from './views/Auth.js'
 import { renderOnboarding } from './views/Onboarding.js'
+import { renderOwnerDashboard } from './views/OwnerDashboard.js'
 import { getSession, getMyProfile } from './services/authService.js'
 import { loadStableContext } from './services/stableContext.js'
+import { initData } from './services/dataService.js'
 
 /**
  * Initializes the application and determines which interface to display.
@@ -13,7 +15,9 @@ import { loadStableContext } from './services/stableContext.js'
  * 2. Displays the authentication view when no session exists.
  * 3. Retrieves the authenticated user's profile.
  * 4. Displays onboarding when the user is not connected to a stable.
- * 5. Loads the active stable context and initializes the main application.
+ * 5. Loads the active stable context, then initializes either the full
+ *    admin app (staff) or the single-page horse-owner dashboard, based on
+ *    the profile's role.
  *
  * Authentication and onboarding can call this function again after their
  * respective processes complete.
@@ -39,6 +43,16 @@ async function bootstrap() {
   }
 
   await loadStableContext()
+
+  if (profile.role === 'horse_owner') {
+    // Horse owners get a single, self-contained dashboard page rather than
+    // the full admin shell (sidebar, router, every section) — RLS already
+    // scopes everything initData() pulls down to just their own data.
+    await initData()
+    renderOwnerDashboard(app)
+    return
+  }
+
   await initApp()
 }
 

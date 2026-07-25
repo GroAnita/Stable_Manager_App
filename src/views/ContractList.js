@@ -3,10 +3,27 @@ import { createTable } from '../components/Table.js'
 import { confirmDialog } from '../components/ConfirmDialog.js'
 import { notify } from '../components/Notification.js'
 import { deleteContractCascade, getAll, getRecord } from '../services/dataService.js'
-import { formatCurrency, formatDate, daysUntil } from '../utils/helpers.js'
+import { currentBillingCycleDays, formatCurrency, formatDate, daysUntil } from '../utils/helpers.js'
 import { icon } from '../utils/icons.js'
 import { t } from '../i18n/index.js'
 import { navigate } from '../router/index.js'
+
+const totalMonthlyPrice = (contract) => {
+  const cycleDays = currentBillingCycleDays()
+  const hayItem =
+    contract.hayPriceListItemId && getRecord('priceListItems', contract.hayPriceListItemId)
+  const beddingItem =
+    contract.beddingPriceListItemId && getRecord('priceListItems', contract.beddingPriceListItemId)
+  const hayValue =
+    contract.includedHayKg && hayItem
+      ? contract.includedHayKg * cycleDays * hayItem.price * 1.25
+      : 0
+  const beddingAmount =
+    contract.beddingQuantity && beddingItem
+      ? contract.beddingQuantity * beddingItem.price * 1.25
+      : 0
+  return Math.round(((Number(contract.monthlyRent) || 0) + hayValue + beddingAmount) * 100) / 100
+}
 
 export function render(container) {
   const contracts = getAll('contracts')
@@ -53,7 +70,8 @@ export function render(container) {
           {
             key: 'monthlyRent',
             label: t('contractList.rent'),
-            render: (contract) => formatCurrency(contract.monthlyRent),
+            sortable: false,
+            render: (contract) => formatCurrency(totalMonthlyPrice(contract)),
           },
           {
             key: 'endDate',

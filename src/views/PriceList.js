@@ -126,6 +126,12 @@ export function render(container) {
             render: (item) => formatCurrency(item.price),
           },
           {
+            key: 'priceIncVat',
+            label: t('priceList.priceIncVat'),
+            sortable: false,
+            render: (item) => formatCurrency((item.price || 0) * 1.25),
+          },
+          {
             key: 'notes',
             label: t('priceList.notes'),
             sortable: false,

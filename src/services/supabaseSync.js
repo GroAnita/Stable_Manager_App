@@ -51,6 +51,9 @@ const mappers = {
       email: row.email || '',
       emergencyContact: row.emergency_contact || '',
       paymentMethod: row.payment_method || '',
+      // Read-only — only set via the invite-owner flow (link_horse_owner_account),
+      // never through the regular owner create/update path.
+      hasPortalAccess: Boolean(row.user_id),
     }),
     toDb: (record) => ({
       full_name: record.name,
@@ -136,6 +139,10 @@ const mappers = {
       endDate: row.end_date || '',
       includedServices: row.included_services || '',
       additionalServices: row.additional_services || '',
+      includedHayKg: row.included_hay_kg ?? '',
+      hayPriceListItemId: row.hay_price_list_item_id || '',
+      beddingQuantity: row.bedding_quantity ?? 0,
+      beddingPriceListItemId: row.bedding_price_list_item_id || '',
       status: row.status || 'active',
     }),
     toDb: (record) => ({
@@ -148,6 +155,10 @@ const mappers = {
       end_date: record.endDate || null,
       included_services: record.includedServices || null,
       additional_services: record.additionalServices || null,
+      included_hay_kg: record.includedHayKg === '' ? null : Number(record.includedHayKg) || 0,
+      hay_price_list_item_id: record.hayPriceListItemId || null,
+      bedding_quantity: Number(record.beddingQuantity) || 0,
+      bedding_price_list_item_id: record.beddingPriceListItemId || null,
       status: record.status || 'active',
     }),
   },

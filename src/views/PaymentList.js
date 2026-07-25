@@ -1,6 +1,7 @@
 import { Badge } from '../components/Badge.js'
 import { Card } from '../components/Card.js'
 import { createTable } from '../components/Table.js'
+import { openPaymentDetailModal } from '../components/PaymentDetailModal.js'
 import { notify } from '../components/Notification.js'
 import { getAll, getRecord, updateRecord } from '../services/dataService.js'
 import { formatCurrency, formatDate } from '../utils/helpers.js'
@@ -94,6 +95,7 @@ export function render(container) {
         sortBy,
         sortDirection,
         emptyMessage: t('paymentList.noPayments'),
+        clickableRows: true,
       },
     )}</div>`
     container.querySelector('[data-payment-search]').addEventListener('input', (event) => {
@@ -113,7 +115,8 @@ export function render(container) {
       }),
     )
     container.querySelectorAll('[data-mark-paid]').forEach((button) =>
-      button.addEventListener('click', () => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation()
         updateRecord('payments', button.getAttribute('data-mark-paid'), {
           status: 'paid',
           paidDate: new Date().toISOString().slice(0, 10),
@@ -122,6 +125,13 @@ export function render(container) {
         render(container)
       }),
     )
+    container
+      .querySelectorAll('#payments-table tbody tr[data-row-id]')
+      .forEach((row) =>
+        row.addEventListener('click', () =>
+          openPaymentDetailModal(getRecord('payments', row.getAttribute('data-row-id'))),
+        ),
+      )
   }
   draw()
 }

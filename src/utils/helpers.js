@@ -64,6 +64,47 @@ export function isOverdue(dateStr) {
   return daysUntil(dateStr) < 0
 }
 
+/**
+ * Stable fees run the 26th of one month through the 25th of the next, so a
+ * per-day rate (e.g. included hay) needs the actual length of that cycle,
+ * which varies with how long the starting month is (28-31 days).
+ *
+ * @param {Date|string} due - The cycle's due date (25th of some month).
+ * @returns {number} Number of days in that cycle.
+ */
+export function daysInBillingCycle(due) {
+  const dueDate = due instanceof Date ? due : new Date(due)
+  const cycleStart = new Date(dueDate.getFullYear(), dueDate.getMonth() - 1, 26)
+  return Math.round((dueDate - cycleStart) / 86400000) + 1
+}
+
+/**
+ * Length of the billing cycle currently in progress (or about to be
+ * invoiced), as of `referenceDate`. See {@link daysInBillingCycle}.
+ *
+ * @param {Date} [referenceDate] - Any date inside the cycle to measure. Defaults to today.
+ * @returns {number} Number of days in that cycle.
+ */
+export function currentBillingCycleDays(referenceDate = new Date()) {
+  return daysInBillingCycle(currentBillingCycleDueDate(referenceDate))
+}
+
+/**
+ * The due date (25th of some month) of the billing cycle currently in
+ * progress as of `referenceDate` — the same invoice a contract change made
+ * today would land on.
+ *
+ * @param {Date} [referenceDate] - Defaults to today.
+ * @returns {string} ISO date string ('YYYY-MM-DD').
+ */
+export function currentBillingCycleDueDate(referenceDate = new Date()) {
+  const dueMonth =
+    referenceDate.getDate() >= 26 ? referenceDate.getMonth() + 1 : referenceDate.getMonth()
+  const due = new Date(referenceDate.getFullYear(), dueMonth, 25)
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${due.getFullYear()}-${pad(due.getMonth() + 1)}-${pad(due.getDate())}`
+}
+
 export function debounce(fn, delay = 250) {
   let timeout
   return (...args) => {

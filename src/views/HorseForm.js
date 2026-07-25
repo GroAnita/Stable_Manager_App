@@ -10,6 +10,7 @@ import {
 } from '../services/dataService.js'
 import { deleteHorsePhoto, uploadHorsePhoto } from '../services/photoService.js'
 import {
+  daysInBillingCycle,
   escapeHtml,
   formatCurrency,
   formatDate,
@@ -135,11 +136,11 @@ function initExtrasLogger({
       )
         .map(
           ([category, list]) =>
-            `<optgroup label="${category}">${list.map((item) => `<option value="${item.id}">${escapeHtml(item.item)} (${formatCurrency(item.price)}${item.unit ? ` / ${escapeHtml(item.unit)}` : ''})</option>`).join('')}</optgroup>`,
+            `<optgroup label="${category}">${list.map((item) => `<option value="${item.id}">${escapeHtml(item.item)} (${formatCurrency(item.price * 1.25)}${item.unit ? ` / ${escapeHtml(item.unit)}` : ''})</option>`).join('')}</optgroup>`,
         )
         .join(
           '',
-        )}</select></label><label><span class="field-label">${t('extrasLogger.quantity')}</span><input class="field" name="quantity" type="number" step="0.01" min="0.01" value="1" required /></label><label><span class="field-label">${t('extrasLogger.date')}</span><input class="field" name="date" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></label><p class="text-sm text-slate-500">${t('extrasLogger.estimatedCharge')} <span class="font-medium text-slate-800" data-extra-cost-preview>${formatCurrency(items[0]?.price || 0)}</span></p><p class="text-xs text-slate-400" data-extra-due-hint></p><button class="btn-primary" type="submit">${t('extrasLogger.submit')}</button></form>`,
+        )}</select></label><label><span class="field-label">${t('extrasLogger.quantity')}</span><input class="field" name="quantity" type="number" step="0.01" min="0.01" value="1" required /></label><label><span class="field-label">${t('extrasLogger.date')}</span><input class="field" name="date" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></label><p class="text-sm text-slate-500">${t('extrasLogger.estimatedCharge')} <span class="font-medium text-slate-800" data-extra-cost-preview>${formatCurrency((items[0]?.price || 0) * 1.25)}</span></p><p class="text-xs text-slate-400" data-extra-due-hint></p><button class="btn-primary" type="submit">${t('extrasLogger.submit')}</button></form>`,
     })
     const form = modal.element.querySelector('.extra-charge-form')
     const itemSelect = form.querySelector('[name="priceListItemId"]')
@@ -149,7 +150,9 @@ function initExtrasLogger({
     const dueHint = form.querySelector('[data-extra-due-hint]')
     const updatePreview = () => {
       const item = getRecord('priceListItems', itemSelect.value)
-      preview.textContent = formatCurrency((item?.price || 0) * (Number(qtyInput.value) || 0))
+      preview.textContent = formatCurrency(
+        (item?.price || 0) * (Number(qtyInput.value) || 0) * 1.25,
+      )
       dueHint.textContent = t('extrasLogger.billedOn', {
         date: formatDate(getInvoiceDueDate(dateInput.value)),
       })
@@ -164,7 +167,9 @@ function initExtrasLogger({
       const item = getRecord('priceListItems', itemSelect.value)
       const quantity = Number(qtyInput.value) || 0
       const date = dateInput.value
-      const amount = (item.price || 0) * quantity
+      // Price list rates are ex-VAT; extras billed to a horse's invoice carry
+      // 25% VAT on top, same as the "Price incl. 25% VAT" price list column.
+      const amount = Math.round((item.price || 0) * quantity * 1.25 * 100) / 100
 
       const activeContract = getAll('contracts').find(
         (contract) => contract.horseId === horse.id && contract.status === 'active',
@@ -204,24 +209,51 @@ function initExtrasLogger({
             invoicePayment.status === 'paid',
         )
         const baseRent = alreadyPaidThisCycle ? 0 : activeContract.monthlyRent || 0
+        const beddingItem =
+          activeContract.beddingPriceListItemId &&
+          getRecord('priceListItems', activeContract.beddingPriceListItemId)
+        const beddingCharge = alreadyPaidThisCycle
+          ? 0
+          : Math.round(
+              (activeContract.beddingQuantity || 0) * (beddingItem?.price || 0) * 1.25 * 100,
+            ) / 100
+        const hayItem =
+          activeContract.hayPriceListItemId &&
+          getRecord('priceListItems', activeContract.hayPriceListItemId)
+        const hayCharge = alreadyPaidThisCycle
+          ? 0
+          : Math.round(
+              (activeContract.includedHayKg || 0) *
+                daysInBillingCycle(dueDate) *
+                (hayItem?.price || 0) *
+                1.25 *
+                100,
+            ) / 100
         // Every invoice due the same date shares the 'INV-YYYYMM' prefix, so
         // a running per-cycle sequence keeps them distinct across contracts
         // instead of colliding on an identical number.
         const sequence =
           getAll('payments').filter((invoicePayment) => invoicePayment.dueDate === dueDate).length +
           1
+        const boardLines = []
+        if (baseRent)
+          boardLines.push(t('extrasLogger.monthlyBoardLine', { amount: formatCurrency(baseRent) }))
+        if (hayCharge)
+          boardLines.push(t('extrasLogger.monthlyHayLine', { amount: formatCurrency(hayCharge) }))
+        if (beddingCharge)
+          boardLines.push(
+            t('extrasLogger.monthlyBeddingLine', { amount: formatCurrency(beddingCharge) }),
+          )
         payment = createRecord('payments', {
           contractId: activeContract.id,
           ownerId: activeContract.ownerId,
           horseId: horse.id,
-          amount: Math.round((baseRent + amount) * 100) / 100,
+          amount: Math.round((baseRent + hayCharge + beddingCharge + amount) * 100) / 100,
           dueDate,
           paidDate: '',
           status: 'due',
           invoiceNumber: `INV-${dueDate.slice(0, 7).replace('-', '')}-${String(sequence).padStart(3, '0')}${alreadyPaidThisCycle ? '-EXTRA' : ''}`,
-          notes: baseRent
-            ? `${t('extrasLogger.monthlyBoardLine', { amount: formatCurrency(baseRent) })}\n${invoiceLine}`
-            : invoiceLine,
+          notes: boardLines.length ? `${boardLines.join('\n')}\n${invoiceLine}` : invoiceLine,
         })
         message = alreadyPaidThisCycle
           ? t('extrasLogger.alreadyPaidExtra', { amount: formatCurrency(amount), item: item.item })

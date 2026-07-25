@@ -5,11 +5,12 @@ export function createTable({
   sortBy = '',
   sortDirection = 'asc',
   emptyMessage = 'No rows found.',
+  clickableRows = false,
 }) {
   const rows = data
     .map(
       (row) =>
-        `<tr>${columns.map((column) => `<td>${column.render ? column.render(row) : (row[column.key] ?? '—')}</td>`).join('')}</tr>`,
+        `<tr${clickableRows ? ` data-row-id="${row.id}" class="cursor-pointer"` : ''}>${columns.map((column) => `<td>${column.render ? column.render(row) : (row[column.key] ?? '—')}</td>`).join('')}</tr>`,
     )
     .join('')
   return `
