@@ -1012,18 +1012,23 @@ function syncHorseStall(horse, previous = null) {
   saveAll('stalls', stalls)
 }
 
-// Rent/hay/bedding are baked into the current cycle's invoice amount as soon
-// as it's created (by generate_monthly_invoices() or the extras logger), so
-// editing a contract mid-cycle otherwise leaves that invoice stale. Any
-// extras already logged against it are tracked as structured entries with a
+// Rent/hay/bedding are baked into the current cycle's invoice amount, and
+// otherwise only get there via generate_monthly_invoices() (once a month,
+// on the 26th) or as a side effect of logging an extra. Neither fires the
+// moment a contract is created, so a brand-new contract could go weeks
+// without an invoice. Saving a contract (create or edit) now always ensures
+// the current cycle's invoice exists and matches it. Extras already logged
+// against an existing invoice are tracked as structured entries with a
 // paymentId (not parsed out of notes text), so they carry over untouched.
 function recalcOpenInvoiceForContract(contract) {
   if (contract.status !== 'active') return
   const dueDate = currentBillingCycleDueDate()
-  const payment = getAll('payments').find(
-    (item) => item.contractId === contract.id && item.dueDate === dueDate && item.status !== 'paid',
+  const payments = getAll('payments')
+  const existing = payments.find(
+    (item) => item.contractId === contract.id && item.dueDate === dueDate,
   )
-  if (!payment) return
+  // Already settled this cycle — don't reopen a paid invoice.
+  if (existing?.status === 'paid') return
 
   const round2 = (value) => Math.round(value * 100) / 100
   const hayItem =
@@ -1050,15 +1055,35 @@ function recalcOpenInvoiceForContract(contract) {
 
   const horse = getRecord('horses', contract.horseId)
   const feedingPlan = getAll('feedingPlans').find((item) => item.horseId === contract.horseId)
-  const extraEntries = [...(horse?.extras || []), ...(feedingPlan?.extras || [])].filter(
-    (entry) => entry.paymentId === payment.id,
-  )
+  const extraEntries = existing
+    ? [...(horse?.extras || []), ...(feedingPlan?.extras || [])].filter(
+        (entry) => entry.paymentId === existing.id,
+      )
+    : []
   const extrasTotal = extraEntries.reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0)
 
   const amount = round2(rent + hayCharge + beddingCharge + extrasTotal)
   const notes = [...boardLines, ...extraEntries.map((entry) => entry.invoiceLine)].join('\n')
-  if (amount === payment.amount && notes === payment.notes) return
-  updateRecord('payments', payment.id, { amount, notes }, { silent: true })
+
+  if (existing) {
+    if (amount === existing.amount && notes === existing.notes) return
+    updateRecord('payments', existing.id, { amount, notes }, { silent: true })
+  } else {
+    // Every invoice due the same date shares the 'INV-YYYYMM' prefix, so a
+    // running per-cycle sequence keeps them distinct across contracts.
+    const sequence = payments.filter((item) => item.dueDate === dueDate).length + 1
+    createRecord('payments', {
+      contractId: contract.id,
+      ownerId: contract.ownerId,
+      horseId: contract.horseId,
+      amount,
+      dueDate,
+      paidDate: '',
+      status: 'due',
+      invoiceNumber: `INV-${dueDate.slice(0, 7).replace('-', '')}-${String(sequence).padStart(3, '0')}`,
+      notes,
+    })
+  }
 }
 
 function syncContract(contract) {
