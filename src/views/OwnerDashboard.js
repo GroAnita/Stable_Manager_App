@@ -1,6 +1,8 @@
 import { Card } from '../components/Card.js'
 import { Badge } from '../components/Badge.js'
-import { getAll, getSettings } from '../services/dataService.js'
+import { openPaymentDetailModal } from '../components/PaymentDetailModal.js'
+import { renderOwnerHorseDetail } from './OwnerHorseDetail.js'
+import { getAll, getRecord, getSettings } from '../services/dataService.js'
 import { signOut } from '../services/authService.js'
 import { escapeHtml, formatCurrency, formatDate, horseAvatarHtml } from '../utils/helpers.js'
 import { icon } from '../utils/icons.js'
@@ -72,7 +74,7 @@ export function renderOwnerDashboard(container) {
                 ? horses
                     .map(
                       (horse) =>
-                        `<div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">${horseAvatarHtml(horse, 'h-12 w-12 shrink-0 rounded-xl text-lg')}<div class="min-w-0"><p class="truncate font-medium text-slate-900">${escapeHtml(horse.name)}</p><p class="truncate text-sm text-slate-500">${escapeHtml(horse.breed)} · ${t('horseList.stall')} ${stalls.find((stall) => stall.id === horse.stallId)?.number || '—'}</p></div></div>`,
+                        `<button type="button" class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-left hover:bg-slate-100" data-horse-open="${horse.id}">${horseAvatarHtml(horse, 'h-12 w-12 shrink-0 rounded-xl text-lg')}<div class="min-w-0"><p class="truncate font-medium text-slate-900">${escapeHtml(horse.name)}</p><p class="truncate text-sm text-slate-500">${escapeHtml(horse.breed)} · ${t('horseList.stall')} ${stalls.find((stall) => stall.id === horse.stallId)?.number || '—'}</p></div></button>`,
                     )
                     .join('')
                 : `<p class="text-sm text-slate-500">${t('ownerDashboard.noHorses')}</p>`
@@ -86,7 +88,7 @@ export function renderOwnerDashboard(container) {
                     .slice(0, 6)
                     .map(
                       (payment) =>
-                        `<div class="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3"><div class="min-w-0"><p class="truncate font-medium text-slate-900">${escapeHtml(payment.invoiceNumber || t('paymentList.invoice'))}</p><p class="text-sm text-slate-500">${t('ownerDetail.due', { date: formatDate(payment.dueDate) })}</p></div><div class="shrink-0 text-right"><p class="font-medium text-slate-900">${formatCurrency(payment.amount)}</p><div class="mt-1">${Badge(payment.status)}</div></div></div>`,
+                        `<div class="flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 hover:bg-slate-100" data-payment-open="${payment.id}"><div class="min-w-0"><p class="truncate font-medium text-slate-900">${escapeHtml(payment.invoiceNumber || t('paymentList.invoice'))}</p><p class="text-sm text-slate-500">${t('ownerDetail.due', { date: formatDate(payment.dueDate) })}</p></div><div class="shrink-0 text-right"><p class="font-medium text-slate-900">${formatCurrency(payment.amount)}</p><div class="mt-1">${Badge(payment.status)}</div></div></div>`,
                     )
                     .join('')
                 : `<p class="text-sm text-slate-500">${t('ownerDashboard.noDuePayments')}</p>`
@@ -158,4 +160,19 @@ export function renderOwnerDashboard(container) {
     await signOut()
     window.location.reload()
   })
+  container
+    .querySelectorAll('[data-payment-open]')
+    .forEach((row) =>
+      row.addEventListener('click', () =>
+        openPaymentDetailModal(getRecord('payments', row.getAttribute('data-payment-open'))),
+      ),
+    )
+  container.querySelectorAll('[data-horse-open]').forEach((button) =>
+    button.addEventListener('click', () =>
+      renderOwnerHorseDetail(container, {
+        horseId: button.getAttribute('data-horse-open'),
+        onBack: () => renderOwnerDashboard(container),
+      }),
+    ),
+  )
 }

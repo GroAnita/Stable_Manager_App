@@ -2,6 +2,11 @@ import { notify } from '../components/Notification.js'
 import { openModal } from '../components/Modal.js'
 import { confirmDialog } from '../components/ConfirmDialog.js'
 import {
+  FEED_CATEGORIES,
+  GENERAL_EXTRA_CATEGORIES,
+  extrasListHtml,
+} from '../components/ExtrasList.js'
+import {
   createRecord,
   deleteRecord,
   getAll,
@@ -10,6 +15,7 @@ import {
 } from '../services/dataService.js'
 import { deleteHorsePhoto, uploadHorsePhoto } from '../services/photoService.js'
 import {
+  currentBillingCycleDueDate,
   daysInBillingCycle,
   escapeHtml,
   formatCurrency,
@@ -20,32 +26,10 @@ import {
 import { t } from '../i18n/index.js'
 import { navigate } from '../router/index.js'
 
-const FEED_CATEGORIES = ['Hay', 'Grain', 'Supplements']
-const GENERAL_EXTRA_CATEGORIES = ['Veterinary', 'Farrier', 'Bedding', 'Mucking']
-
 // Stable fees are due the 25th of every month, covering the cycle from the
 // 26th of the previous month through the 25th of the given month. An extra
 // dated inside that window belongs on the invoice due at the window's end.
-function getInvoiceDueDate(dateStr) {
-  const date = new Date(dateStr)
-  const dueMonth = date.getDate() >= 26 ? date.getMonth() + 1 : date.getMonth()
-  const due = new Date(date.getFullYear(), dueMonth, 25)
-  const pad = (value) => String(value).padStart(2, '0')
-  return `${due.getFullYear()}-${pad(due.getMonth() + 1)}-${pad(due.getDate())}`
-}
-
-const extraRowTemplate = (entry) => `
-  <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 p-3" data-extra-id="${entry.id}">
-    <div>
-      <p class="font-medium text-slate-900">${escapeHtml(entry.item)}${entry.category ? ` <span class="text-xs font-normal text-slate-400">(${escapeHtml(entry.category)})</span>` : ''}</p>
-      <p class="mt-1 text-xs text-slate-500">${entry.quantity}${entry.unit ? ` ${escapeHtml(entry.unit)}` : ''} · ${formatCurrency(entry.amount)} · ${formatDate(entry.date)}</p>
-    </div>
-    <button type="button" class="btn-ghost px-3 py-2" data-remove-extra="${entry.id}">${t('common.remove')}</button>
-  </div>`
-const extrasListHtml = (extras) =>
-  extras.length
-    ? extras.map(extraRowTemplate).join('')
-    : `<p class="text-sm text-slate-500">${t('horseForm.noExtrasLogged')}</p>`
+const getInvoiceDueDate = (dateStr) => currentBillingCycleDueDate(new Date(dateStr))
 
 // Shared logger for "pick something off the price list beyond what the
 // contract covers, bill it to the horse's monthly invoice" flows. Feeding

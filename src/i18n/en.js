@@ -332,6 +332,8 @@ export const en = {
     monthlyBoardLine: 'Monthly board — {amount}',
     monthlyHayLine: 'Hay (incl. 25% VAT) — {amount}',
     monthlyBeddingLine: 'Bedding (incl. 25% VAT) — {amount}',
+    loggedToast: 'Extra logged and billed to your invoice.',
+    logError: 'Could not log this extra: {error}',
   },
   ownerList: {
     title: 'Owners',
@@ -400,6 +402,11 @@ export const en = {
     noneScheduled: 'Nothing scheduled.',
     publicEvents: 'Stable events',
     noPublicEvents: 'No upcoming stable events.',
+  },
+  ownerHorseDetail: {
+    back: 'Back',
+    feedingPlan: 'Feeding plan',
+    noFeedingPlan: 'No feeding plan set yet.',
   },
   ownerForm: {
     editTitle: 'Edit owner',

@@ -333,6 +333,8 @@ export const no = {
     monthlyBoardLine: 'Månedlig fôringsavgift — {amount}',
     monthlyHayLine: 'Høy (inkl. 25% MVA) — {amount}',
     monthlyBeddingLine: 'Flis/strø (inkl. 25% MVA) — {amount}',
+    loggedToast: 'Ekstrakostnad registrert og fakturert.',
+    logError: 'Kunne ikke registrere denne ekstrakostnaden: {error}',
   },
   ownerList: {
     title: 'Eiere',
@@ -401,6 +403,11 @@ export const no = {
     noneScheduled: 'Ingenting planlagt.',
     publicEvents: 'Stallhendelser',
     noPublicEvents: 'Ingen kommende stallhendelser.',
+  },
+  ownerHorseDetail: {
+    back: 'Tilbake',
+    feedingPlan: 'Fôringsplan',
+    noFeedingPlan: 'Ingen fôringsplan satt opp ennå.',
   },
   ownerForm: {
     editTitle: 'Rediger eier',
