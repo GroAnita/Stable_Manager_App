@@ -87,6 +87,8 @@ const mappers = {
       status: row.status || 'active',
       notes: row.notes || '',
       extras: safeJsonParse(row.extras, []),
+      frontHoofSize: row.front_hoof_size || '',
+      backHoofSize: row.back_hoof_size || '',
     }),
     toDb: (record) => ({
       name: record.name,
@@ -109,6 +111,8 @@ const mappers = {
       status: record.status || 'active',
       notes: record.notes || null,
       extras: JSON.stringify(record.extras || []),
+      front_hoof_size: record.frontHoofSize || null,
+      back_hoof_size: record.backHoofSize || null,
     }),
   },
   stalls: {

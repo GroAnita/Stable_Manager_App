@@ -269,7 +269,18 @@ function initExtrasLogger({
   bindRemoveButtons()
 }
 
-const TAB_KEYS = ['overview', 'medical', 'feeding', 'extra', 'documents', 'schedule', 'notes']
+const TAB_KEYS = [
+  'overview',
+  'medical',
+  'feeding',
+  'extra',
+  'documents',
+  'schedule',
+  'farrier',
+  'notes',
+]
+
+const HOOF_SIZES = ['8x0', '7x0', '6x0', '5x0', '4x0', '000', '00', '0', '1', '2', '3', '4', '5']
 
 export function render(container, params = {}) {
   const editing = Boolean(params.id)
@@ -292,7 +303,12 @@ export function render(container, params = {}) {
     ? getAll('calendarEvents').filter((event) => event.horseId === horse.id)
     : []
   let activeTab = 'overview'
-  let medicalRows = medicalRecords.map((record) => ({ ...record }))
+  let medicalRows = medicalRecords
+    .filter((record) => record.type !== 'farrier')
+    .map((record) => ({ ...record }))
+  let farrierRows = medicalRecords
+    .filter((record) => record.type === 'farrier')
+    .map((record) => ({ ...record }))
   let eventRows = events.map((event) => ({ ...event }))
 
   const tabLabels = {
@@ -302,6 +318,7 @@ export function render(container, params = {}) {
     extra: t('horseForm.tabExtra'),
     documents: t('horseForm.tabDocuments'),
     schedule: t('horseForm.tabSchedule'),
+    farrier: t('horseForm.tabFarrier'),
     notes: t('horseForm.tabNotes'),
   }
 
@@ -311,6 +328,15 @@ export function render(container, params = {}) {
       <label><span class="field-label">${t('horseForm.recordDate')}</span><input class="field" type="date" data-field="date" value="${row.date || ''}" /></label>
       <label><span class="field-label">${t('horseForm.nextDue')}</span><input class="field" type="date" data-field="nextDueDate" value="${row.nextDueDate || ''}" /></label>
       <label><span class="field-label">${t('horseForm.vetProvider')}</span><input class="field" type="text" data-field="vet" value="${row.vet || ''}" /></label>
+      <label class="md:col-span-2 xl:col-span-3"><span class="field-label">${t('horseForm.notes')}</span><textarea class="field min-h-16" data-field="notes">${row.notes || ''}</textarea></label>
+      <div class="flex items-end"><button type="button" class="btn-ghost w-full" data-remove-row>${t('horseForm.remove')}</button></div>
+    </div>`
+
+  const farrierRowTemplate = (row = {}) => `
+    <div class="record-row grid gap-3 rounded-2xl border border-slate-100 p-4 md:grid-cols-2 xl:grid-cols-4" data-row-id="${row.id || ''}">
+      <label><span class="field-label">${t('horseForm.recordDate')}</span><input class="field" type="date" data-field="date" value="${row.date || ''}" /></label>
+      <label><span class="field-label">${t('horseForm.nextShoeing')}</span><input class="field" type="date" data-field="nextDueDate" value="${row.nextDueDate || ''}" /></label>
+      <label><span class="field-label">${t('horseForm.farrierProvider')}</span><input class="field" type="text" data-field="vet" value="${row.vet || ''}" /></label>
       <label class="md:col-span-2 xl:col-span-3"><span class="field-label">${t('horseForm.notes')}</span><textarea class="field min-h-16" data-field="notes">${row.notes || ''}</textarea></label>
       <div class="flex items-end"><button type="button" class="btn-ghost w-full" data-remove-row>${t('horseForm.remove')}</button></div>
     </div>`
@@ -327,7 +353,7 @@ export function render(container, params = {}) {
 
   container.innerHTML = `
     <div class="page-shell">
-      <div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">${editing ? t('horseForm.editTitle') : t('horseForm.addTitle')}</h1><p class="mt-2 text-sm text-slate-500">${t('horseForm.subtitle')}</p></div></div>
+      <div class="page-header"><div><h1 class="text-3xl font-semibold text-slate-900">${editing ? t('horseForm.editTitle', { name: horse.name }) : t('horseForm.addTitle')}</h1><p class="mt-2 text-sm text-slate-500">${t('horseForm.subtitle')}</p></div></div>
       <div class="flex flex-wrap gap-2">${TAB_KEYS.map((key) => `<button type="button" class="${key === activeTab ? 'bg-forest text-white' : 'bg-white text-slate-600'} rounded-xl px-4 py-2 text-sm font-medium" data-tab="${key}">${tabLabels[key]}</button>`).join('')}</div>
       <form id="horse-form" class="panel p-6">
 
@@ -443,6 +469,15 @@ export function render(container, params = {}) {
           <div class="mt-3 space-y-3" data-event-list>${eventRows.map(eventRowTemplate).join('')}</div>
         </div>
 
+        <div class="tab-panel hidden" data-panel="farrier">
+          <div class="grid gap-5 md:grid-cols-2">
+            <label><span class="field-label">${t('horseForm.frontHoofSize')}</span><select class="field" name="frontHoofSize"><option value="">${t('horseForm.selectSize')}</option>${HOOF_SIZES.map((size) => `<option value="${size}" ${horse?.frontHoofSize === size ? 'selected' : ''}>${size}</option>`).join('')}</select></label>
+            <label><span class="field-label">${t('horseForm.backHoofSize')}</span><select class="field" name="backHoofSize"><option value="">${t('horseForm.selectSize')}</option>${HOOF_SIZES.map((size) => `<option value="${size}" ${horse?.backHoofSize === size ? 'selected' : ''}>${size}</option>`).join('')}</select></label>
+          </div>
+          <div class="mt-8 flex items-center justify-between border-t border-slate-100 pt-6"><h3 class="font-semibold text-slate-900">${t('horseForm.farrierRecords')}</h3><button type="button" class="btn-ghost" data-add-farrier>${t('horseForm.addRecord')}</button></div>
+          <div class="mt-3 space-y-3" data-farrier-list>${farrierRows.map(farrierRowTemplate).join('')}</div>
+        </div>
+
         <div class="tab-panel hidden" data-panel="notes">
           <label class="block"><span class="field-label">${t('horseForm.generalNotes')}</span><textarea class="field min-h-32" name="notes">${horse?.notes || ''}</textarea></label>
         </div>
@@ -498,6 +533,7 @@ export function render(container, params = {}) {
   })
 
   const medicalList = container.querySelector('[data-medical-list]')
+  const farrierList = container.querySelector('[data-farrier-list]')
   const eventList = container.querySelector('[data-event-list]')
 
   container
@@ -506,9 +542,17 @@ export function render(container, params = {}) {
       medicalList.insertAdjacentHTML('beforeend', medicalRowTemplate()),
     )
   container
+    .querySelector('[data-add-farrier]')
+    .addEventListener('click', () =>
+      farrierList.insertAdjacentHTML('beforeend', farrierRowTemplate()),
+    )
+  container
     .querySelector('[data-add-event]')
     .addEventListener('click', () => eventList.insertAdjacentHTML('beforeend', eventRowTemplate()))
   container.querySelector('[data-medical-list]').addEventListener('click', (event) => {
+    if (event.target.closest('[data-remove-row]')) event.target.closest('.record-row').remove()
+  })
+  container.querySelector('[data-farrier-list]').addEventListener('click', (event) => {
     if (event.target.closest('[data-remove-row]')) event.target.closest('.record-row').remove()
   })
   container.querySelector('[data-event-list]').addEventListener('click', (event) => {
@@ -633,6 +677,15 @@ export function render(container, params = {}) {
       notes: row.querySelector('[data-field="notes"]').value,
     }))
 
+    const farrierPayload = Array.from(farrierList.querySelectorAll('.record-row')).map((row) => ({
+      id: row.getAttribute('data-row-id') || undefined,
+      type: 'farrier',
+      date: row.querySelector('[data-field="date"]').value,
+      nextDueDate: row.querySelector('[data-field="nextDueDate"]').value,
+      vet: row.querySelector('[data-field="vet"]').value,
+      notes: row.querySelector('[data-field="notes"]').value,
+    }))
+
     const eventPayload = Array.from(eventList.querySelectorAll('.record-row')).map((row) => ({
       id: row.getAttribute('data-row-id') || undefined,
       title: row.querySelector('[data-field="title"]').value,
@@ -666,7 +719,7 @@ export function render(container, params = {}) {
           : createRecord(entity, { ...row, horseId }),
       )
     }
-    syncChildRecords('medicalRecords', medicalPayload)
+    syncChildRecords('medicalRecords', [...medicalPayload, ...farrierPayload])
     syncChildRecords('calendarEvents', eventPayload)
 
     notify(

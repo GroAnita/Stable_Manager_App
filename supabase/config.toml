@@ -17,8 +17,8 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "http://127.0.0.1:5173"
-additional_redirect_urls = ["http://127.0.0.1:5173"]
+site_url = "http://127.0.0.1:5180"
+additional_redirect_urls = ["http://127.0.0.1:5180"]
 jwt_expiry = 3600
 enable_signup = true
 

@@ -5,6 +5,10 @@ export default defineConfig({
   // they need '/'. GitHub Pages serves this as a project page under
   // /Stable_Manager_App/, so the web build needs that prefix instead.
   base: process.env.GITHUB_PAGES ? '/Stable_Manager_App/' : '/',
+  server: {
+    port: 5180,
+    strictPort: true,
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,
