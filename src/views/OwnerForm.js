@@ -1,4 +1,4 @@
-import { notify } from '../components/Notification.js'
+import { notify } from '../components/Notification.jsx'
 import {
   createRecord,
   deleteRecord,

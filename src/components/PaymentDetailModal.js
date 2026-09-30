@@ -1,5 +1,5 @@
 import { Badge } from './Badge.js'
-import { openModal } from './Modal.js'
+import { openModal } from './Modal.jsx'
 import { getRecord } from '../services/dataService.js'
 import { escapeHtml, formatCurrency, formatDate } from '../utils/helpers.js'
 import { t } from '../i18n/index.js'

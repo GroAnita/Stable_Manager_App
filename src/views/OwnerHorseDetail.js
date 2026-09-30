@@ -1,5 +1,5 @@
-import { openModal } from '../components/Modal.js'
-import { notify } from '../components/Notification.js'
+import { openModal } from '../components/Modal.jsx'
+import { notify } from '../components/Notification.jsx'
 import {
   FEED_CATEGORIES,
   GENERAL_EXTRA_CATEGORIES,

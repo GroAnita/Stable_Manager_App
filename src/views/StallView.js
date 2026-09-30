@@ -1,7 +1,7 @@
 import { Badge } from '../components/Badge.js'
-import { confirmDialog } from '../components/ConfirmDialog.js'
-import { openModal } from '../components/Modal.js'
-import { notify } from '../components/Notification.js'
+import { confirmDialog } from '../components/ConfirmDialog.jsx'
+import { openModal } from '../components/Modal.jsx'
+import { notify } from '../components/Notification.jsx'
 import {
   createRecord,
   deleteRecord,

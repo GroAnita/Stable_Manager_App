@@ -1,6 +1,6 @@
 import { Badge } from '../components/Badge.js'
-import { confirmDialog } from '../components/ConfirmDialog.js'
-import { notify } from '../components/Notification.js'
+import { confirmDialog } from '../components/ConfirmDialog.jsx'
+import { notify } from '../components/Notification.jsx'
 import { deleteHorseCascade, getHorseBundle } from '../services/dataService.js'
 import { escapeHtml, formatDate, horseAvatarHtml } from '../utils/helpers.js'
 import { icon } from '../utils/icons.js'

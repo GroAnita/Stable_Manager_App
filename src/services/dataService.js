@@ -6,7 +6,7 @@ import {
   generateId,
   setCurrency,
 } from '../utils/helpers.js'
-import { notify } from '../components/Notification.js'
+import { notify } from '../components/Notification.jsx'
 import { t } from '../i18n/index.js'
 import {
   pullAllFromSupabase,

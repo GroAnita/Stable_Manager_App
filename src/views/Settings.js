@@ -1,5 +1,5 @@
-import { confirmDialog } from '../components/ConfirmDialog.js'
-import { notify } from '../components/Notification.js'
+import { confirmDialog } from '../components/ConfirmDialog.jsx'
+import { notify } from '../components/Notification.jsx'
 import {
   exportData,
   getSettings,

@@ -1,9 +1,9 @@
 import { Badge } from '../components/Badge.js'
 import { EmptyState } from '../components/EmptyState.js'
-import { confirmDialog } from '../components/ConfirmDialog.js'
-import { openModal } from '../components/Modal.js'
+import { confirmDialog } from '../components/ConfirmDialog.jsx'
+import { openModal } from '../components/Modal.jsx'
 import { openPaymentDetailModal } from '../components/PaymentDetailModal.js'
-import { notify } from '../components/Notification.js'
+import { notify } from '../components/Notification.jsx'
 import {
   deleteOwnerCascade,
   getOwnerBundle,

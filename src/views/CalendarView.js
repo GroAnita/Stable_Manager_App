@@ -1,6 +1,6 @@
 import { Badge } from '../components/Badge.js'
-import { openModal } from '../components/Modal.js'
-import { notify } from '../components/Notification.js'
+import { openModal } from '../components/Modal.jsx'
+import { notify } from '../components/Notification.jsx'
 import { createRecord, getAll, getRecord } from '../services/dataService.js'
 import { escapeHtml, formatDate } from '../utils/helpers.js'
 import { icon } from '../utils/icons.js'

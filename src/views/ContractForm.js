@@ -1,4 +1,4 @@
-import { notify } from '../components/Notification.js'
+import { notify } from '../components/Notification.jsx'
 import { createRecord, getAll, getRecord, updateRecord } from '../services/dataService.js'
 import { currentBillingCycleDays, formatCurrency } from '../utils/helpers.js'
 import { t } from '../i18n/index.js'
